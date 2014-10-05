@@ -22,19 +22,19 @@ public class Database
 		   try
 		   {
 			   //STEP 2: Register JDBC driver
-			   Class.forName("com.mysql.jdbc.Driver");
+			   Class.forName(JDBC_DRIVER);
 
 			   //STEP 3: Open a connection
-			   System.out.println("Connecting to database...");
+			   //System.out.println("Connecting to database...");
 			   conn = DriverManager.getConnection(DB_URL, USER, PASS);
 
 			   //STEP 4: Execute a query
-			   System.out.println("Creating database...");
+			   //System.out.println("Creating database...");
 			   stmt = conn.createStatement();
   
 			   String sql = Query.createDB;
 			   stmt.executeUpdate(sql);
-			   System.out.println("Database created successfully...");
+			   //System.out.println("Database created successfully...");
 			   //Database.DB_URL = DB_URL_BASE + Query.DBname;
 		   }
 		   catch(SQLException se)
@@ -76,7 +76,7 @@ public class Database
 				   se.printStackTrace();
 			   }//end finally try
 		   }//end try
-		   System.out.println("Goodbye!");
+		   //System.out.println("Goodbye!");
 	}//end createDB
 	
 	public static void createTable() 
@@ -86,21 +86,21 @@ public class Database
 		try
 		{
 		    //STEP 2: Register JDBC driver
-		    Class.forName("com.mysql.jdbc.Driver");
+		    Class.forName(JDBC_DRIVER);
 
 		    //STEP 3: Open a connection
-		    System.out.println("Connecting to a selected database..." + DB_URL);
+		   // System.out.println("Connecting to a selected database..." + DB_URL);
 		    conn = DriverManager.getConnection(DB_URL, USER, PASS);
-		    System.out.println("Connected database successfully...");
+		    //System.out.println("Connected database successfully...");
 		    
 		    //STEP 4: Execute a query
-		    System.out.println("Creating table in given database...");
+		    //System.out.println("Creating table in given database...");
 		    stmt = conn.createStatement();
 		    
 		    String sql = Query.createTable; 
 
 		    stmt.executeUpdate(sql);
-		    System.out.println("Created table in given database...");
+		    //System.out.println("Created table in given database...");
 		}
 		catch(SQLException se)
 		{
@@ -141,7 +141,7 @@ public class Database
 		    	se.printStackTrace();
 		    }//end finally try
 		}//end try
-		System.out.println("Goodbye!");
+		//System.out.println("Goodbye!");
 	}//end createTable
 	
 	public static void insertIntoTable(String file, Integer size, String type) 
@@ -151,23 +151,22 @@ public class Database
 		try
 		{
 			//STEP 2: Register JDBC driver
-			Class.forName("com.mysql.jdbc.Driver");
+			Class.forName(JDBC_DRIVER);
 		
 			//STEP 3: Open a connection
-			System.out.println("Connecting to a selected database...");
+			//System.out.println("Connecting to a selected database...");
 			conn = DriverManager.getConnection(DB_URL, USER, PASS);
-			System.out.println("Connected database successfully...");
+			//System.out.println("Connected database successfully...");
 			
 			//STEP 4: Execute a query
-			System.out.println("Inserting records into the table...");
+			//System.out.println("Inserting records into the table...");
 			stmt = conn.createStatement();
 			
 			String sql = Query.insertIntoTable(file, size, type);
-			System.out.println("Query is : " + sql);
+			//System.out.println("Query is : " + sql);
 			stmt.executeUpdate(sql);
 			
-			System.out.println("Inserted records into the table...");
-		
+			//System.out.println("Inserted records into the table...");
 		}
 		catch(SQLException se)
 		{
@@ -201,7 +200,7 @@ public class Database
 				se.printStackTrace();
 			}//end finally try
 	    }//end try
-		System.out.println("Goodbye!");
+		//System.out.println("Goodbye!");
 	}//end insertIntoTable
 	
 	public static void deleteFromTable(Integer identity) 
@@ -211,22 +210,21 @@ public class Database
 		try
 		{
 			//STEP 2: Register JDBC driver
-			Class.forName("com.mysql.jdbc.Driver");
+			Class.forName(JDBC_DRIVER);
 		
 			//STEP 3: Open a connection
-			System.out.println("Connecting to a selected database...");
+			//System.out.println("Connecting to a selected database...");
 			conn = DriverManager.getConnection(DB_URL, USER, PASS);
-			System.out.println("Connected database successfully...");
+			//System.out.println("Connected database successfully...");
 			
 			//STEP 4: Execute a query
-			System.out.println("Inserting records into the table...");
+			//System.out.println("Inserting records into the table...");
 			stmt = conn.createStatement();
 			
 			String sql = Query.deleteFromTable(identity);
 			stmt.executeUpdate(sql);
 			
-			System.out.println("Inserted records into the table...");
-		
+			//System.out.println("Inserted records into the table...");
 		}
 		catch(SQLException se)
 		{
@@ -260,7 +258,7 @@ public class Database
 				se.printStackTrace();
 			}//end finally try
 	    }//end try
-		System.out.println("Goodbye!");
+		//System.out.println("Goodbye!");
 	}//end deleteFromTable
 	
 	public static ArrayList<HashMap<String, String>> selectFromTable(String file) 
@@ -270,19 +268,19 @@ public class Database
 		try
 		{
 			//STEP 2: Register JDBC driver
-			Class.forName("com.mysql.jdbc.Driver");
+			Class.forName(JDBC_DRIVER);
 			
 			//STEP 3: Open a connection
-		    System.out.println("Connecting to a selected database...");
+		    //System.out.println("Connecting to a selected database...");
 		    conn = DriverManager.getConnection(DB_URL, USER, PASS);
-		    System.out.println("Connected database successfully...");
+		    //System.out.println("Connected database successfully...");
 		      
 		    //STEP 4: Execute a query
-		    System.out.println("Creating statement...");
+		    //System.out.println("Creating statement...");
 		    stmt = conn.createStatement();
 
 		    String sql = Query.selectFromTable(file);
-		    System.out.println("Query: " + sql);
+		    //System.out.println("Query: " + sql);
 		    ResultSet rs = stmt.executeQuery(sql);
 		    //STEP 5: Extract data from result set
 		    ArrayList<HashMap<String, String>> selectionList = new ArrayList<HashMap<String, String>> ();
@@ -290,6 +288,7 @@ public class Database
 		    {
 		    	//Retrieve by column name
 		    	HashMap<String, String> hm = new HashMap<String, String> ();
+		    	hm.put("identity", Integer.toString(rs.getInt("id")));
 		    	hm.put("filepath", rs.getString("filepath"));
 		    	hm.put("type", rs.getString("type"));
 		    	hm.put("size", Integer.toString(rs.getInt("size")));
@@ -330,7 +329,7 @@ public class Database
 		    	se.printStackTrace();
 		    }//end finally try
 		}//end try
-		System.out.println("Goodbye!");
+		//System.out.println("Goodbye!");
 		return null;
 	}//end selectFromTable
 	

@@ -1,22 +1,16 @@
 package fileTransfer;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.spi.FileTypeDetector;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import database.Database;
 
@@ -26,34 +20,11 @@ public class Client
 	private static Socket socket;
 	private static BufferedReader sockreader;
 	private static PrintWriter sockwriter;
-	private static String logFileName = "log.txt";
-	private static BufferedReader brLog;
-	private static PrintWriter pwLog;
-	
-	private File fileClient; 
-	
-	private ArrayList<File> toBeSynced;
+	private static Timer timerForRechecking;
+	private static int recheckinterval = 15; // seconds
 	
 	public Client()
-	{
-		fileClient = new File(logFileName);
-		try 
-		{
-			fileClient.createNewFile();
-		} 
-		catch (IOException e) 
-		{
-			e.printStackTrace();
-		}
-		try 
-		{
-			brLog = new BufferedReader(new FileReader(fileClient));
-			pwLog = new PrintWriter(new BufferedWriter(new FileWriter(fileClient, true)));
-		}
-		catch (Exception e) 
-		{
-			e.printStackTrace();
-		}
+	{		
 		try
 		{
 			Database.createDB();
@@ -62,6 +33,33 @@ public class Client
 		catch(Exception E)
 		{
 			E.printStackTrace();
+		}
+				
+		timerForRechecking = new Timer();
+		timerForRechecking.scheduleAtFixedRate(new recheck(), 0, recheckinterval*1000);
+	}
+	
+	class recheck extends TimerTask
+	{
+		@Override
+		public void run()
+		{
+			ArrayList<HashMap<String, String>> log = Database.selectFromTable(null);
+			for(HashMap<String, String> hm:log)
+			{
+				String filepath = hm.get("filepath");
+				int identity = Integer.parseInt(hm.get("identity"));
+				File file = new File(filepath);
+				if(!file.exists())
+				{
+					// file no longer exists
+					System.out.println("\nFile no longer exists!!!\n");
+					Database.deleteFromTable(identity);
+					String command = "DELETE FILE " + file.getAbsolutePath();
+					System.out.println("Issueing command : \n" + command);
+					issueCommandToServer(command);
+				}
+			}
 		}
 	}
 	
@@ -98,8 +96,6 @@ public class Client
 		}
 	}
 	
-	
-
 	private void showChoices() 
 	{
 		System.out.println("Enter your choices:\n");
@@ -132,12 +128,10 @@ public class Client
 		System.out.println("Enter the full path of the file of the corresponding directory that you want to share: ");
 		try 
 		{
-			brLog.close();
-			brLog = new BufferedReader(new FileReader(fileClient)); // reinitialise to point to starting of the file
-			toBeSynced = new ArrayList<File> ();
 			br.read();
 			String shareThis = br.readLine();
 			File file = new File(shareThis);
+			
 			if(!file.exists())
 			{
 				System.out.println("Sorry, the file with the particular path does not exists...");
@@ -145,10 +139,6 @@ public class Client
 			}
 			else if(file.isDirectory())
 			{
-				//File[] files = file.listFiles(); 
-				//for(File file1 : files)
-					//System.out.println(file1.getName());
-				// add all the files in this directory to the sharing list
 				addToLogDirectory(file);
 			}
 			else if(file.isFile())
@@ -170,7 +160,6 @@ public class Client
 	
 	private void addToLogDirectory(File file)
 	{
-		ArrayList<File> names = new ArrayList<File>();
 		File[] files = file.listFiles();
 		for(File file1 : files)
 		{
@@ -190,36 +179,10 @@ public class Client
 	private void addToLogFile(File file)
 	{
 		System.out.println(file.getAbsolutePath());
-		/*try
-		{
-			String line = brLog.readLine();
-			while(line != null)
-			{
-				if(file.getAbsolutePath().compareTo(line) == 0)
-				{
-					return; // file already in log
-				}
-				brLog.readLine();
-				brLog.read();
-				line = brLog.readLine();
-			}
-			if(line == null)
-			{
-				pwLog.println(file.getAbsolutePath());
-				pwLog.println(file.length());
-				pwLog.flush();
-				toBeSynced.add(file);
-			}
-		}
-		catch(Exception E)
-		{
-			System.out.println("abc");
-			E.printStackTrace();
-		}*/
 		String filepath = file.getAbsolutePath();
 		Integer size = (int) file.length();
 		String type = null;
-		//String separator = File.separator;
+
 		try 
 		{
 			type = Files.probeContentType(file.toPath());
@@ -231,54 +194,15 @@ public class Client
 		ArrayList<HashMap<String, String>> result = Database.selectFromTable(filepath);
 		if(result.size() > 0)
 		{
-			System.out.println("File already hashed!!!");
+			System.out.println("File " + filepath + " already hashed!!!");
 		}
 		else
 		{
+			// new file added to the log
 			Database.insertIntoTable(filepath, size, type);
-			reSyncWithServerLog();
+			String command = "NEW FILE " + filepath;
+			issueCommandToServer(command);
 		}
-	}
-
-	private void reSyncWithServerLog() 
-	{
-		// TODO: Add code to resync newly added files with the server log
-	}
-	
-	private void recheckLog()
-	{
-		// rechecking of the log file for checking the validity of the files
-		BufferedReader br1; 
-		try 
-		{
-			br1 = new BufferedReader(new FileReader(fileClient)); // reinitialise to point to the starting of the file
-			String line = br1.readLine();
-			while(line != null)
-			{
-				File file = new File(line);
-				if(!file.exists())
-				{
-					deleteFileFromLog(file);
-				}
-								
-				int size = Integer.parseInt(br1.readLine());
-				if(file.exists() && size != file.length())
-				{
-					
-				}
-				br1.read();
-				line = br.readLine();
-			}
-		}
-		catch (IOException e) 
-		{
-			e.printStackTrace();
-		}
-	}
-
-	private void deleteFileFromLog(File file) {
-		// TODO Auto-generated method stub
-		
 	}
 
 	private void searchForFile() 
@@ -288,8 +212,8 @@ public class Client
 		{
 			String searchForThis = br.readLine();
 			System.out.println("Your command: search for " + searchForThis + " has been issued");
-			String command = "search " + searchForThis;
-			issueCommand(command);
+			String command = "SEARCH FILE " + searchForThis;
+			issueCommandToServer(command);
 		} 
 		catch (IOException e) 
 		{
@@ -298,8 +222,25 @@ public class Client
 		}
 	}
 
-	private void issueCommand(String command) 
+	private void issueCommandToServer(String command) 
 	{
-		sockwriter.write(command);
+		String keyword = command.split(" ")[0];
+		if(keyword.equals("ADD"))
+		{
+			System.out.println("New file is to be added to the server log");
+		}
+		else if(keyword.equals("SEARCH"))
+		{
+			System.out.println("Searching for a file in the server log");
+		}
+		else if(keyword.equals("DELETE"))
+		{
+			System.out.println("Deleting a file in the server log");
+		}
+		else
+		{
+			System.out.println("Sorry, unknown command");
+		}
+		//sockwriter.write(command);
 	}
 }
