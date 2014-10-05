@@ -4,6 +4,8 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.nio.file.Files;
@@ -19,7 +21,9 @@ public class Client
 	private static BufferedReader br;
 	private static Socket socket;
 	private static BufferedReader sockreader;
+	private static ObjectInputStream sockreaderForObjects;
 	private static PrintWriter sockwriter;
+	//private static ObjectOutputStream sockwriterForObjects;
 	private static Timer timerForRechecking;
 	private static int recheckinterval = 15; // seconds
 	
@@ -72,7 +76,7 @@ public class Client
 	private void execute() 
 	{
 		br = new BufferedReader(new InputStreamReader(System.in));
-		//Socket socket = connectToServer();
+		Socket socket = connectToServer();
 		showChoices();
 	}
 
@@ -82,9 +86,10 @@ public class Client
 		try 
 		{
 			String servaddr = br.readLine();
-			socket = new Socket(servaddr, 15123);
+			socket = new Socket(servaddr, 5001);
 			sockreader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 			sockwriter = new PrintWriter(socket.getOutputStream());
+			sockreaderForObjects = new ObjectInputStream(socket.getInputStream());
 			System.out.println("Client socket has been created!!!");
 			return socket;
 		} 
@@ -210,6 +215,7 @@ public class Client
 		System.out.println("Enter the filename to search for:");
 		try 
 		{
+			br.read();
 			String searchForThis = br.readLine();
 			System.out.println("Your command: search for " + searchForThis + " has been issued");
 			String command = "SEARCH FILE " + searchForThis;
@@ -222,25 +228,66 @@ public class Client
 		}
 	}
 
-	private void issueCommandToServer(String command) 
+	private String issueCommandToServer(String command) 
 	{
 		String keyword = command.split(" ")[0];
-		if(keyword.equals("ADD"))
+		String result = null;
+		try
 		{
-			System.out.println("New file is to be added to the server log");
+			if(keyword.equals("ADD"))
+			{
+				System.out.println("New file is being added to the server log...");
+				sockwriter.write(command + "\n");
+				sockwriter.flush();
+				result = sockreader.readLine();
+				if(result.equalsIgnoreCase("addition done"))
+				{
+					System.out.println("Addition has been done.");
+				}
+				else
+				{
+					System.out.println("Sorry, server error. Please try again later...");
+					result = "addition error";
+				}
+			}
+			else if(keyword.equals("SEARCH"))
+			{
+				System.out.println("Searching for a file in the server log...");
+				sockwriter.write(command + "\n");
+				sockwriter.flush();
+				ArrayList<HashMap<String, String>> resultForSearch = (ArrayList<HashMap<String,String>>) sockreaderForObjects.readObject();
+				System.out.println("Results for your search query are: ");
+				System.out.println("IP address    File Name    Size    Type  ");
+				for(HashMap<String, String> hm:resultForSearch)
+				{
+					System.out.println(hm.get("IP") + " | " + hm.get("filename") + " | " + hm.get("filesize") + " | " + hm.get("filetype"));
+				}				
+			}
+			else if(keyword.equals("DELETE"))
+			{
+				System.out.println("Deleting a file in the server log...");
+				sockwriter.write(command + "\n");
+				sockwriter.flush();
+				result = sockreader.readLine();
+				if(result.equalsIgnoreCase("deletion done"))
+				{
+					System.out.println("Deletion has been done...");
+				}
+				else
+				{
+					System.out.println("Sorry, server error. Please try again later...");
+					result = "deletion error";
+				}
+			}
+			else
+			{
+				System.out.println("Sorry, unknown command");
+			}
 		}
-		else if(keyword.equals("SEARCH"))
+		catch(Exception E)
 		{
-			System.out.println("Searching for a file in the server log");
+			E.printStackTrace();
 		}
-		else if(keyword.equals("DELETE"))
-		{
-			System.out.println("Deleting a file in the server log");
-		}
-		else
-		{
-			System.out.println("Sorry, unknown command");
-		}
-		//sockwriter.write(command);
+		return result;
 	}
 }
