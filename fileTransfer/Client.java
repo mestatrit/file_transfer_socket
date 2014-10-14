@@ -1,7 +1,13 @@
 package fileTransfer;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
@@ -19,7 +25,8 @@ import database.Database;
 public class Client 
 {
 	private static BufferedReader br;
-	private Socket socketConnectToServer; // Assumption: can connect to just one server at a time
+	private Socket serverSocket; // Assumption: can connect to just one server at a time
+	private Socket clientSocket;
 	private static BufferedReader serversockreader;
 	private static ObjectInputStream serversockreaderForObjects;
 	private static PrintWriter serversockwriter;
@@ -106,24 +113,21 @@ public class Client
 		}while(flag);
 	}
 
-	private Socket connectToServer() 
+	private void connectToServer() 
 	{
 		System.out.println("Enter the IP address of the server: \n");
 		try 
 		{
 			String servaddr = br.readLine();
-			Socket socket = new Socket(servaddr, serverPORT);
-			serversockreader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-			serversockwriter = new PrintWriter(socket.getOutputStream());
-			serversockreaderForObjects = new ObjectInputStream(socket.getInputStream());
+			serverSocket = new Socket(servaddr, serverPORT);
+			serversockreader = new BufferedReader(new InputStreamReader(serverSocket.getInputStream()));
+			serversockwriter = new PrintWriter(serverSocket.getOutputStream());
+			serversockreaderForObjects = new ObjectInputStream(serverSocket.getInputStream());
 			System.out.println("Client socket has been created!!!");
-			return socket;
 		} 
 		catch (IOException e) 
 		{
-			
 			e.printStackTrace();
-			return null;
 		}
 	}
 	
@@ -383,14 +387,17 @@ public class Client
 			}
 			else if(keyword.equals("LIST"))
 			{
-				System.out.println("Getting the file list of " + split[1]);
+				String IP = split[1];
+				// TODO check validity of this ip address
+				
+				System.out.println("Getting the file list of " + IP);
 				serversockwriter.write(command + "\n");
 				serversockwriter.flush();
 				
 				// returns file paths of the user specified
 				ArrayList<String> fileListUser = (ArrayList<String>) serversockreaderForObjects.readObject();
 				
-				System.out.println("Files shared by the user " + split[1] + " are: ");
+				System.out.println("Files shared by the user " + IP + " are: ");
 				
 				int i = 1;
 				for(String str:fileListUser)
@@ -401,7 +408,41 @@ public class Client
 			}
 			else if(keyword.equals("GETFILE"))
 			{
+				/*
+				 *  To get file from the user:
+				 *  1. Create a connection to the user (clientsocket)
+				 *  2. Receive the max size of a packet (MAXSIZE) 
+				 *  3. Receive number of transmissions (packets)
+				 *  4. Open the required file in reading and binary mode
+				 *  5. Loop for this number of times and receive packets in chunk
+				 *  6. Save chunk into the file
+				 *  
+				 *  And that's how its done....
+				 */
+				String clientIP = split[1]; // ip of client
+				// TODO check validity of this ip address
 				
+				String peerName = split[2]; // file name
+				String[] splitPeerName = peerName.split("/");
+				String myFileName = splitPeerName[splitPeerName.length-1];
+				File myFile = new File(downloadDir + "/" + myFileName);
+				FileOutputStream myFileWriter = new FileOutputStream(myFile);
+				
+				clientSocket = new Socket(clientIP, clientPORT);
+				DataInputStream clientSocketReader = new DataInputStream(new BufferedInputStream(clientSocket.getInputStream()));
+				DataOutputStream myFileWriter = new DataOutputStream(new BufferedOutputStream(myFile.getAbsolutePath()));
+				
+				int MAXSIZE = clientSocketReader.read();
+				int transmissions = clientSocketReader.read();
+				
+				int i = 0;
+				char buffer[] = new char[MAXSIZE];
+				while(i < transmissions)
+				{
+					clientSocketReader.read(buffer);
+					System.out.println("Received " + i);
+					myFileWriter.write(bytes);
+				}
 			}
 			else
 			{
