@@ -19,13 +19,18 @@ import database.Database;
 public class Client 
 {
 	private static BufferedReader br;
-	private static Socket socket;
-	private static BufferedReader sockreader;
-	private static ObjectInputStream sockreaderForObjects;
-	private static PrintWriter sockwriter;
+	private Socket socketConnectToServer; // Assumption: can connect to just one server at a time
+	private static BufferedReader serversockreader;
+	private static ObjectInputStream serversockreaderForObjects;
+	private static PrintWriter serversockwriter;
 	//private static ObjectOutputStream sockwriterForObjects;
 	private static Timer timerForRechecking;
 	private static int recheckinterval = 15; // seconds
+	
+	private String downloadDir;
+	
+	private static int serverPORT = 5001; // port on which clients connect to server
+	private static int clientPORT = 5002; // port on which client peers connect amongst them
 	
 	public Client()
 	{		
@@ -59,7 +64,7 @@ public class Client
 					// file no longer exists
 					System.out.println("\nFile no longer exists!!!\n");
 					Database.deleteFromTable(identity);
-					String command = "DELETE FILE " + file.getAbsolutePath();
+					String command = "DELETE " + file.getAbsolutePath();
 					System.out.println("Issueing command : \n" + command);
 					issueCommandToServer(command);
 				}
@@ -76,8 +81,29 @@ public class Client
 	private void execute() 
 	{
 		br = new BufferedReader(new InputStreamReader(System.in));
-		Socket socket = connectToServer();
-		showChoices();
+		boolean flag = true;
+		do
+		{
+			System.out.println("Specify the download directory: ");
+		
+			try 
+			{
+				File file = new File(downloadDir);
+				if(!file.exists() || !file.isDirectory())
+				{
+					System.out.println("Please enter a valid download directory.");
+					downloadDir = null;			
+					return ;
+				}
+				connectToServer();
+				showChoices();
+				flag = false;
+			}
+			catch(Exception E)
+			{
+				E.printStackTrace();
+			}
+		}while(flag);
 	}
 
 	private Socket connectToServer() 
@@ -86,10 +112,10 @@ public class Client
 		try 
 		{
 			String servaddr = br.readLine();
-			socket = new Socket(servaddr, 5001);
-			sockreader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-			sockwriter = new PrintWriter(socket.getOutputStream());
-			sockreaderForObjects = new ObjectInputStream(socket.getInputStream());
+			Socket socket = new Socket(servaddr, serverPORT);
+			serversockreader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+			serversockwriter = new PrintWriter(socket.getOutputStream());
+			serversockreaderForObjects = new ObjectInputStream(socket.getInputStream());
 			System.out.println("Client socket has been created!!!");
 			return socket;
 		} 
@@ -101,24 +127,32 @@ public class Client
 		}
 	}
 	
+	// show choices to the user
 	private void showChoices() 
 	{
 		System.out.println("Enter your choices:\n");
-		System.out.println("1. Search for a file\n2. Share a file\n3. Send a message");
+		System.out.println("1. Search for a file\n2. Share a file\n3. Send a message\n4. Get all online users\n5. Get a user's file list");
 		try 
 		{
-			int choice = br.read() - '0';
-			
-			switch(choice)
+			while(true)
 			{
-				case 1: searchForFile(); 
-						break;
-				case 2: shareFile();
-						break;
-				case 3:
-						break;
-				default:
-						break;
+				int choice = br.read() - '0';
+				
+				switch(choice)
+				{
+					case 1: searchForFile(); 
+							break;
+					case 2: shareFile();
+							break;
+					case 3: serverBroadcastMsg();
+							break;
+					case 4:	getAllUsers();
+							break;
+					case 5:	getFileList();
+							break;							
+					default:
+							break;
+				}
 			}
 		} 
 		catch (IOException e) 
@@ -126,6 +160,29 @@ public class Client
 			System.out.println("Sorry, input error!!!");
 			e.printStackTrace();
 		}
+	}
+
+	private void getFileList() throws IOException 
+	{
+		String IP = br.readLine();
+		String command = "LIST " + IP;
+		issueCommandToServer(command);
+	}
+
+	private void getAllUsers() 
+	{
+		String command = "USERS";
+		issueCommandToServer(command);
+	}
+
+	private void serverBroadcastMsg() throws IOException 
+	{
+		// send the command to the server to broadcast the message
+		String msg = br.readLine();
+		String cmd = "BROADCAST " + msg;
+		
+		// issue command to the server
+		issueCommandToServer(cmd);
 	}
 
 	private void shareFile() 
@@ -205,11 +262,11 @@ public class Client
 		{
 			// new file added to the log
 			Database.insertIntoTable(filepath, size, type);
-			String command = "NEW FILE " + filepath;
+			String command = "ADD " + filepath;
 			issueCommandToServer(command);
 		}
 	}
-
+	
 	private void searchForFile() 
 	{
 		System.out.println("Enter the filename to search for:");
@@ -218,7 +275,7 @@ public class Client
 			br.read();
 			String searchForThis = br.readLine();
 			System.out.println("Your command: search for " + searchForThis + " has been issued");
-			String command = "SEARCH FILE " + searchForThis;
+			String command = "SEARCH " + searchForThis;
 			issueCommandToServer(command);
 		} 
 		catch (IOException e) 
@@ -227,19 +284,30 @@ public class Client
 			e.printStackTrace();
 		}
 	}
-
+	
 	private String issueCommandToServer(String command) 
 	{
-		String keyword = command.split(" ")[0];
+		/*	valid commands:
+		 *	1. ADD - add a new file to the server log
+		 *	2. SEARCH - search for a file in server log
+		 *	3. DELETE - delete a file from server log
+		 *	4. BROADCAST - broadcast a message to all users 
+		 *	5. USERS - get all the currently online users 
+		 *	6. LIST - get the file list of a client with a particular ip
+		 *	7. GETFILE - receive the actual file from the user
+		 * */
+		
+		String[] split = command.split(" "); 
+		String keyword = split[0];
 		String result = null;
 		try
 		{
 			if(keyword.equals("ADD"))
 			{
 				System.out.println("New file is being added to the server log...");
-				sockwriter.write(command + "\n");
-				sockwriter.flush();
-				result = sockreader.readLine();
+				serversockwriter.write(command + "\n");
+				serversockwriter.flush();
+				result = serversockreader.readLine();
 				if(result.equalsIgnoreCase("addition done"))
 				{
 					System.out.println("Addition has been done.");
@@ -253,9 +321,9 @@ public class Client
 			else if(keyword.equals("SEARCH"))
 			{
 				System.out.println("Searching for a file in the server log...");
-				sockwriter.write(command + "\n");
-				sockwriter.flush();
-				ArrayList<HashMap<String, String>> resultForSearch = (ArrayList<HashMap<String,String>>) sockreaderForObjects.readObject();
+				serversockwriter.write(command + "\n");
+				serversockwriter.flush();
+				ArrayList<HashMap<String, String>> resultForSearch = (ArrayList<HashMap<String,String>>) serversockreaderForObjects.readObject();
 				System.out.println("Results for your search query are: ");
 				System.out.println("IP address    File Name    Size    Type  ");
 				for(HashMap<String, String> hm:resultForSearch)
@@ -266,9 +334,9 @@ public class Client
 			else if(keyword.equals("DELETE"))
 			{
 				System.out.println("Deleting a file in the server log...");
-				sockwriter.write(command + "\n");
-				sockwriter.flush();
-				result = sockreader.readLine();
+				serversockwriter.write(command + "\n");
+				serversockwriter.flush();
+				result = serversockreader.readLine();
 				if(result.equalsIgnoreCase("deletion done"))
 				{
 					System.out.println("Deletion has been done...");
@@ -278,6 +346,62 @@ public class Client
 					System.out.println("Sorry, server error. Please try again later...");
 					result = "deletion error";
 				}
+			}
+			else if(keyword.equals("BROADCAST"))
+			{
+				System.out.println("Broadcasting the message...");
+				serversockwriter.write(command + "\n");
+				serversockwriter.flush();
+				result = serversockreader.readLine();
+				if(result.equalsIgnoreCase("broadcast done"))
+				{
+					System.out.println("Your message has been sent...");
+				}
+				else
+				{
+					System.out.println("Sorry, server error. Please try again later...");
+					result = "broadcast error";
+				}
+			}
+			else if(keyword.equals("USERS"))
+			{
+				System.out.println("Getting all the currently online users...");
+				serversockwriter.write(command + "\n");
+				serversockwriter.flush();
+				
+				// returns an arraylist of ip addresses of currently online users
+				ArrayList<String> serverOnlineUsers = (ArrayList<String>) serversockreaderForObjects.readObject();
+				
+				System.out.println("IP addresses of currently online users are: ");
+				
+				int i = 1;
+				for(String str:serverOnlineUsers)
+				{
+					System.out.println(i + " ----> " + str);
+					i ++;
+				}	
+			}
+			else if(keyword.equals("LIST"))
+			{
+				System.out.println("Getting the file list of " + split[1]);
+				serversockwriter.write(command + "\n");
+				serversockwriter.flush();
+				
+				// returns file paths of the user specified
+				ArrayList<String> fileListUser = (ArrayList<String>) serversockreaderForObjects.readObject();
+				
+				System.out.println("Files shared by the user " + split[1] + " are: ");
+				
+				int i = 1;
+				for(String str:fileListUser)
+				{
+					System.out.println(i + " ----> " + str);
+					i ++;
+				}	
+			}
+			else if(keyword.equals("GETFILE"))
+			{
+				
 			}
 			else
 			{
