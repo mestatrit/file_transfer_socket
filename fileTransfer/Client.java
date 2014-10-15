@@ -3,15 +3,11 @@ package fileTransfer;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.nio.file.Files;
@@ -19,6 +15,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Timer;
 import java.util.TimerTask;
+import org.apache.commons.validator.routines.InetAddressValidator;
 
 import database.Database;
 
@@ -135,7 +132,7 @@ public class Client
 	private void showChoices() 
 	{
 		System.out.println("Enter your choices:\n");
-		System.out.println("1. Search for a file\n2. Share a file\n3. Send a message\n4. Get all online users\n5. Get a user's file list");
+		System.out.println("1. Search for a file\n2. Share a file\n3. Send a message\n4. Get all online users\n5. Get a user's file list\n6. Download a file");
 		try 
 		{
 			while(true)
@@ -153,7 +150,9 @@ public class Client
 					case 4:	getAllUsers();
 							break;
 					case 5:	getFileList();
-							break;							
+							break;	
+					case 6:	downloadFile();
+							break;
 					default:
 							break;
 				}
@@ -164,6 +163,22 @@ public class Client
 			System.out.println("Sorry, input error!!!");
 			e.printStackTrace();
 		}
+	}
+
+	private void downloadFile() throws IOException 
+	{
+		System.out.println("Enter the IP address of the peer: ");
+		String IPaddr = br.readLine();
+		InetAddressValidator IPvalidator = new InetAddressValidator();
+		if(!IPvalidator.isValid(IPaddr))
+		{
+			System.out.println("Please check the IP address that you have provided.");
+			return ;
+		}
+		System.out.println("Enter the whole file path, that you wish to download from the peer");
+		String fileName = br.readLine();
+		String command = "GETFILE " + IPaddr + " " + fileName;
+		issueCommandToServer(command);
 	}
 
 	private void getFileList() throws IOException 
@@ -266,7 +281,7 @@ public class Client
 		{
 			// new file added to the log
 			Database.insertIntoTable(filepath, size, type);
-			String command = "ADD " + filepath;
+			String command = "ADD " + filepath + " " + size + " " + type;
 			issueCommandToServer(command);
 		}
 	}
@@ -292,13 +307,13 @@ public class Client
 	private String issueCommandToServer(String command) 
 	{
 		/*	valid commands:
-		 *	1. ADD - add a new file to the server log
-		 *	2. SEARCH - search for a file in server log
-		 *	3. DELETE - delete a file from server log
+		 *	1. ADD - add a new file to the server log USAGE: ADD <filename> <path> <size>
+		 *	2. SEARCH - search for a file in server log USAGE: SEARCH <filename>
+		 *	3. DELETE - delete a file from server log USAGE: DELETE <file name>
 		 *	4. BROADCAST - broadcast a message to all users 
 		 *	5. USERS - get all the currently online users 
-		 *	6. LIST - get the file list of a client with a particular ip
-		 *	7. GETFILE - receive the actual file from the user
+		 *	6. LIST - get the file list of a client with a particular ip USAGE: LIST <IP address>
+		 *	7. GETFILE - receive the actual file from the user USAGE : GETFILE <IP address> <full filename>
 		 * */
 		
 		String[] split = command.split(" "); 
@@ -327,6 +342,7 @@ public class Client
 				System.out.println("Searching for a file in the server log...");
 				serversockwriter.write(command + "\n");
 				serversockwriter.flush();
+				@SuppressWarnings("unchecked")
 				ArrayList<HashMap<String, String>> resultForSearch = (ArrayList<HashMap<String,String>>) serversockreaderForObjects.readObject();
 				System.out.println("Results for your search query are: ");
 				System.out.println("IP address    File Name    Size    Type  ");
@@ -374,6 +390,7 @@ public class Client
 				serversockwriter.flush();
 				
 				// returns an arraylist of ip addresses of currently online users
+				@SuppressWarnings("unchecked")
 				ArrayList<String> serverOnlineUsers = (ArrayList<String>) serversockreaderForObjects.readObject();
 				
 				System.out.println("IP addresses of currently online users are: ");
@@ -388,13 +405,13 @@ public class Client
 			else if(keyword.equals("LIST"))
 			{
 				String IP = split[1];
-				// TODO check validity of this ip address
 				
 				System.out.println("Getting the file list of " + IP);
 				serversockwriter.write(command + "\n");
 				serversockwriter.flush();
 				
 				// returns file paths of the user specified
+				@SuppressWarnings("unchecked")
 				ArrayList<String> fileListUser = (ArrayList<String>) serversockreaderForObjects.readObject();
 				
 				System.out.println("Files shared by the user " + IP + " are: ");
@@ -420,29 +437,31 @@ public class Client
 				 *  And that's how its done....
 				 */
 				String clientIP = split[1]; // ip of client
-				// TODO check validity of this ip address
 				
 				String peerName = split[2]; // file name
 				String[] splitPeerName = peerName.split("/");
 				String myFileName = splitPeerName[splitPeerName.length-1];
 				File myFile = new File(downloadDir + "/" + myFileName);
-				FileOutputStream myFileWriter = new FileOutputStream(myFile);
-				
+				BufferedOutputStream myFileWriter = new BufferedOutputStream(new FileOutputStream(myFile));
+
 				clientSocket = new Socket(clientIP, clientPORT);
-				DataInputStream clientSocketReader = new DataInputStream(new BufferedInputStream(clientSocket.getInputStream()));
-				DataOutputStream myFileWriter = new DataOutputStream(new BufferedOutputStream(myFile.getAbsolutePath()));
+				BufferedInputStream clientSocketReader = new BufferedInputStream(clientSocket.getInputStream());
 				
 				int MAXSIZE = clientSocketReader.read();
 				int transmissions = clientSocketReader.read();
 				
 				int i = 0;
-				char buffer[] = new char[MAXSIZE];
+				byte buffer[] = new byte[MAXSIZE];
 				while(i < transmissions)
 				{
 					clientSocketReader.read(buffer);
 					System.out.println("Received " + i);
-					myFileWriter.write(bytes);
+					myFileWriter.write(buffer);
+					myFileWriter.flush();
 				}
+				clientSocketReader.close();
+				
+				myFileWriter.close();
 			}
 			else
 			{
