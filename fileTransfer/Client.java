@@ -3,12 +3,13 @@ package fileTransfer;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
-import java.io.PrintWriter;
+import java.io.OutputStreamWriter;
 import java.net.Socket;
 import java.nio.file.Files;
 import java.util.ArrayList;
@@ -22,20 +23,20 @@ import database.Database;
 public class Client 
 {
 	private static BufferedReader br;
-	private Socket serverSocket; // Assumption: can connect to just one server at a time
-	private Socket clientSocket;
 	private static BufferedReader serversockreader;
 	private static ObjectInputStream serversockreaderForObjects;
-	private static PrintWriter serversockwriter;
-	//private static ObjectOutputStream sockwriterForObjects;
+	private static BufferedWriter serversockwriter;
 	private static Timer timerForRechecking;
 	private static int recheckinterval = 15; // seconds
-	
-	private String downloadDir;
-	
+
 	private static int serverPORT = 5001; // port on which clients connect to server
 	private static int clientPORT = 5002; // port on which client peers connect amongst them
-	
+
+	private Socket serverSocket; // Assumption: can connect to just one server at a time
+	private Socket clientSocket;
+
+	private String downloadDir;
+		
 	public Client()
 	{		
 		try
@@ -118,7 +119,7 @@ public class Client
 			String servaddr = br.readLine();
 			serverSocket = new Socket(servaddr, serverPORT);
 			serversockreader = new BufferedReader(new InputStreamReader(serverSocket.getInputStream()));
-			serversockwriter = new PrintWriter(serverSocket.getOutputStream());
+			serversockwriter = new BufferedWriter(new OutputStreamWriter(serverSocket.getOutputStream()));
 			serversockreaderForObjects = new ObjectInputStream(serverSocket.getInputStream());
 			System.out.println("Client socket has been created!!!");
 		} 
