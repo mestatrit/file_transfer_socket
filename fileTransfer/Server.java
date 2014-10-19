@@ -18,7 +18,6 @@ public class Server
 		try 
 		{
 			serverSocket = new ServerSocket(serverPORT, backlogLength);
-			
 		}
 		catch (IOException e) 
 		{

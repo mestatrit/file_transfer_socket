@@ -37,7 +37,6 @@ public class ServerThread extends Thread
 	
 	public void run()
 	{
-		//TODO: act on client commands
 		
 		/*
 		 * 	It has to check if the client's share of files exceeds a certain amount
@@ -79,7 +78,13 @@ public class ServerThread extends Thread
 					int size = Integer.parseInt(command.get("arg2"));
 					String type = command.get("arg3");
 					
-					//TODO: check if the current file has already been hashed by this user
+					ArrayList<HashMap<String, String>> selectionList = Database_server.selectFromTable_byUserAndFile(clientIP, filepath);
+					if(selectionList.isEmpty())
+					{
+						serversockwriterForObjects.writeUTF("file already hashed at server side by this user!!!");
+						serversockwriterForObjects.flush();
+						continue;
+					}
 					
 					int result = Database_server.insertIntoTable(clientIP, filepath, filename, size, type);
 					if(result == 0)

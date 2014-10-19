@@ -97,10 +97,17 @@ public class Query
 		return select;
 	}
 	
-	protected static String deleteFromTable_server_byUserAndFile(String IPaddr, String filepath)
+	protected static String selectFromTable_server_byUserAndFile(String IPaddr, String filepath)
 	{
 		String select = "SELECT id, filepath, filename, size, type FROM " + TableName_server + " WHERE IPaddr = \"" + IPaddr + "\" AND filepath = \"" + filepath + "\";";
 		return select;
 	}
+	
+	protected static String deleteFromTable_server_byUserAndFile(String IPaddr, String filepath)
+	{
+		String delete = "DELETE FROM " + TableName_server + " WHERE IPaddr = \"" + IPaddr + "\" AND filepath = \"" + filepath + "\";";
+		return delete;
+	}
+
 	
 }
