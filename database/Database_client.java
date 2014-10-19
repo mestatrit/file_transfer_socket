@@ -15,10 +15,12 @@ public class Database_client
 	private static String USER = "root";
 	private static String PASS = "";
 	
-	public static void createDB()
+	public static int createDB()
 	{
 		   Connection conn = null;
 		   Statement stmt = null;
+		   
+		   int result = 1;
 		   try
 		   {
 			   //STEP 2: Register JDBC driver
@@ -26,7 +28,7 @@ public class Database_client
 
 			   //STEP 3: Open a connection
 			   //System.out.println("Connecting to database...");
-			   conn = DriverManager.getConnection(DB_URL, USER, PASS);
+			   conn = DriverManager.getConnection(DB_URL_BASE, USER, PASS);
 
 			   //STEP 4: Execute a query
 			   //System.out.println("Creating database...");
@@ -34,6 +36,8 @@ public class Database_client
   
 			   String sql = Query.createDB_client;
 			   stmt.executeUpdate(sql);
+			   
+			   result = 0;
 			   //System.out.println("Database created successfully...");
 			   //Database.DB_URL = DB_URL_BASE + Query.DBname;
 		   }
@@ -64,7 +68,7 @@ public class Database_client
 			   }
 			   catch(SQLException se2)
 			   {
-				   
+				   result = 2;
 			   }// nothing we can do
 			   try
 			   {
@@ -74,15 +78,20 @@ public class Database_client
 			   catch(SQLException se)
 			   {
 				   se.printStackTrace();
+				   result = 2;
 			   }//end finally try
 		   }//end try
 		   //System.out.println("Goodbye!");
+		   
+		   return result;
 	}//end createDB
 	
-	public static void createTable() 
+	public static int createTable() 
 	{
 		Connection conn = null;
 		Statement stmt = null;
+		
+		int result = 1;
 		try
 		{
 		    //STEP 2: Register JDBC driver
@@ -100,6 +109,8 @@ public class Database_client
 		    String sql = Query.createTable_client; 
 
 		    stmt.executeUpdate(sql);
+		    
+		    result = 0;
 		    //System.out.println("Created table in given database...");
 		}
 		catch(SQLException se)
@@ -129,7 +140,7 @@ public class Database_client
 		    }
 		    catch(SQLException se)
 		    {
-		    
+		    	result = 2;
 		    }// do nothing
 		    try
 		    {
@@ -139,15 +150,21 @@ public class Database_client
 		    catch(SQLException se)
 		    {
 		    	se.printStackTrace();
+		    	result = 2;
 		    }//end finally try
 		}//end try
 		//System.out.println("Goodbye!");
+		
+		return result;
+		
 	}//end createTable
 	
-	public static void insertIntoTable(String filepath, String filename, Integer size, String type) 
+	public static int insertIntoTable(String filepath, String filename, Integer size, String type) 
 	{
 		Connection conn = null;
 		Statement stmt = null;
+		
+		int result = 1;
 		try
 		{
 			//STEP 2: Register JDBC driver
@@ -161,10 +178,12 @@ public class Database_client
 			//STEP 4: Execute a query
 			//System.out.println("Inserting records into the table...");
 			stmt = conn.createStatement();
-			
+						
 			String sql = Query.insertIntoTable_client(filepath, filename, size, type);
 			//System.out.println("Query is : " + sql);
 			stmt.executeUpdate(sql);
+			
+			result = 0; 
 			
 			//System.out.println("Inserted records into the table...");
 		}
@@ -188,7 +207,7 @@ public class Database_client
 			}
 			catch(SQLException se)
 			{
-			
+				result = 2;
 			}// do nothing
 			try
 			{
@@ -198,15 +217,19 @@ public class Database_client
 			catch(SQLException se)
 			{
 				se.printStackTrace();
+				result = 2;
 			}//end finally try
 	    }//end try
 		//System.out.println("Goodbye!");
+		return result;
 	}//end insertIntoTable
 	
-	public static void deleteFromTable(Integer identity) 
+	public static int deleteFromTable(Integer identity) 
 	{
 		Connection conn = null;
 		Statement stmt = null;
+		
+		int result = 1;
 		try
 		{
 			//STEP 2: Register JDBC driver
@@ -224,6 +247,7 @@ public class Database_client
 			String sql = Query.deleteFromTable_client(identity);
 			stmt.executeUpdate(sql);
 			
+			result = 0;			
 			//System.out.println("Inserted records into the table...");
 		}
 		catch(SQLException se)
@@ -246,7 +270,7 @@ public class Database_client
 			}
 			catch(SQLException se)
 			{
-			
+				result = 2;
 			}// do nothing
 			try
 			{
@@ -256,9 +280,11 @@ public class Database_client
 			catch(SQLException se)
 			{
 				se.printStackTrace();
+				result = 2;
 			}//end finally try
 	    }//end try
 		//System.out.println("Goodbye!");
+		return result;
 	}//end deleteFromTable
 	
 	public static ArrayList<HashMap<String, String>> selectFromTable(String file) 

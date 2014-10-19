@@ -7,8 +7,11 @@ import java.net.Socket;
 public class Server 
 {
 	private static ServerSocket serverSocket; 
-	private int serverPORT = 5001;
+	private int serverPORT = 5003;
 	private int backlogLength = 10;
+	
+	protected String[] connectedUsers = new String[backlogLength];
+	protected int index = -1;
 	
 	public Server()
 	{
@@ -36,6 +39,10 @@ public class Server
 			try 
 			{
 				Socket socket = serverSocket.accept();
+				System.out.println("Server connected!!!");
+				index ++;
+				connectedUsers[index] = socket.getInetAddress().toString();
+				System.out.println("remote address: " + connectedUsers[index]); 
 				ServerThread st = new ServerThread(socket);
 				st.start();
 			}

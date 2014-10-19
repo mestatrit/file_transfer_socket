@@ -15,10 +15,12 @@ public class Database_server
 	private static String USER = "root";
 	private static String PASS = "";
 	
-	public static void createDB()
+	public static int createDB()
 	{
 		   Connection conn = null;
 		   Statement stmt = null;
+		   
+		   int result = 1;
 		   try
 		   {
 			   //STEP 2: Register JDBC driver
@@ -36,6 +38,8 @@ public class Database_server
 			   stmt.executeUpdate(sql);
 			   //System.out.println("Database created successfully...");
 			   //Database.DB_URL = DB_URL_BASE + Query.DBname;
+			   
+			   result = 0;
 		   }
 		   catch(SQLException se)
 		   {
@@ -64,7 +68,7 @@ public class Database_server
 			   }
 			   catch(SQLException se2)
 			   {
-				   
+				   result = 2;
 			   }// nothing we can do
 			   try
 			   {
@@ -74,15 +78,19 @@ public class Database_server
 			   catch(SQLException se)
 			   {
 				   se.printStackTrace();
+				   result = 2;
 			   }//end finally try
 		   }//end try
 		   //System.out.println("Goodbye!");
+		   return result;
 	}//end createDB
 	
-	public static void createTable() 
+	public static int createTable() 
 	{
 		Connection conn = null;
 		Statement stmt = null;
+		
+		int result = 1;
 		try
 		{
 		    //STEP 2: Register JDBC driver
@@ -98,9 +106,11 @@ public class Database_server
 		    stmt = conn.createStatement();
 		    
 		    String sql = Query.createTable_server; 
-
+		//  System.out.println(sql);
 		    stmt.executeUpdate(sql);
 		    //System.out.println("Created table in given database...");
+		    
+		    result = 0;		    
 		}
 		catch(SQLException se)
 		{
@@ -129,7 +139,7 @@ public class Database_server
 		    }
 		    catch(SQLException se)
 		    {
-		    
+		    	result = 2;
 		    }// do nothing
 		    try
 		    {
@@ -139,15 +149,20 @@ public class Database_server
 		    catch(SQLException se)
 		    {
 		    	se.printStackTrace();
-		    }//end finally try
+		    	result = 2;
+		    }//end finally try		    
 		}//end try
 		//System.out.println("Goodbye!");
+		
+		return result;
 	}//end createTable
 	
-	public static void insertIntoTable(String IPaddr, String filepath, String filename, Integer size, String type) 
+	public static int insertIntoTable(String IPaddr, String filepath, String filename, Integer size, String type) 
 	{
 		Connection conn = null;
 		Statement stmt = null;
+		
+		int result = 1;		
 		try
 		{
 			//STEP 2: Register JDBC driver
@@ -166,6 +181,8 @@ public class Database_server
 			//System.out.println("Query is : " + sql);
 			stmt.executeUpdate(sql);
 			
+			result = 0;
+			
 			//System.out.println("Inserted records into the table...");
 		}
 		catch(SQLException se)
@@ -188,7 +205,7 @@ public class Database_server
 			}
 			catch(SQLException se)
 			{
-			
+				result = 2;
 			}// do nothing
 			try
 			{
@@ -198,15 +215,21 @@ public class Database_server
 			catch(SQLException se)
 			{
 				se.printStackTrace();
+				result = 2;
 			}//end finally try
 	    }//end try
 		//System.out.println("Goodbye!");
+		
+		return result;
+		
 	}//end insertIntoTable
 	
-	public static void deleteFromTable(Integer identity) 
+	public static int deleteFromTable(Integer identity) 
 	{
 		Connection conn = null;
 		Statement stmt = null;
+		
+		int result = 1;
 		try
 		{
 			//STEP 2: Register JDBC driver
@@ -224,6 +247,8 @@ public class Database_server
 			String sql = Query.deleteFromTable_server(identity);
 			stmt.executeUpdate(sql);
 			
+			result = 0;
+			
 			//System.out.println("Inserted records into the table...");
 		}
 		catch(SQLException se)
@@ -246,7 +271,7 @@ public class Database_server
 			}
 			catch(SQLException se)
 			{
-			
+				result = 2;
 			}// do nothing
 			try
 			{
@@ -256,9 +281,13 @@ public class Database_server
 			catch(SQLException se)
 			{
 				se.printStackTrace();
+				result = 2;
 			}//end finally try
 	    }//end try
 		//System.out.println("Goodbye!");
+		
+		return result;
+		
 	}//end deleteFromTable
 	
 	public static ArrayList<HashMap<String, String>> selectFromTable_byFile(String file) 
@@ -407,6 +436,69 @@ public class Database_server
 		}//end try
 		//System.out.println("Goodbye!");
 		return null;
+	}//end selectFromTable
+	
+	public static int deleteFromTable_byUserAndFile(String IPaddr, String filepath) 
+	{
+		Connection conn = null;
+		Statement stmt = null;
+		
+		int result = 1;
+		try
+		{
+			//STEP 2: Register JDBC driver
+			Class.forName(JDBC_DRIVER);
+			
+			//STEP 3: Open a connection
+		    //System.out.println("Connecting to a selected database...");
+		    conn = DriverManager.getConnection(DB_URL, USER, PASS);
+		    //System.out.println("Connected database successfully...");
+		      
+		    //STEP 4: Execute a query
+		    //System.out.println("Creating statement...");
+		    stmt = conn.createStatement();
+
+		    String sql = Query.deleteFromTable_server_byUserAndFile(IPaddr, filepath);
+		    //System.out.println("Query: " + sql);
+		    
+		    result = 0;
+		    
+		}
+		catch(SQLException se)
+		{
+			//Handle errors for JDBC
+			se.printStackTrace();
+		}
+		catch(Exception e)
+		{
+			//Handle errors for Class.forName
+			e.printStackTrace();
+		}
+		finally
+		{
+			//finally block used to close resources
+			try
+			{
+				if(stmt!=null)
+					conn.close();
+		    }
+			catch(SQLException se)
+			{
+				result = 2;
+			}// do nothing
+		    try
+		    {
+		    	if(conn!=null)
+		    		conn.close();
+		    }
+		    catch(SQLException se)
+		    {
+		    	se.printStackTrace();
+		    	result = 2;
+		    }//end finally try
+		}//end try
+		//System.out.println("Goodbye!");
+		return result;
 	}//end selectFromTable
 	
 }

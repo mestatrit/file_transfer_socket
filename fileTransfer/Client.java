@@ -9,6 +9,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.OutputStreamWriter;
 import java.net.Socket;
 import java.nio.file.Files;
@@ -23,13 +24,12 @@ import database.Database_client;
 public class Client 
 {
 	private static BufferedReader br;
-	private static BufferedReader serversockreader;
 	private static ObjectInputStream serversockreaderForObjects;
-	private static BufferedWriter serversockwriter;
+	private static ObjectOutputStream serversockwriterForObjects;
 	private static Timer timerForRechecking;
 	private static int recheckinterval = 15; // seconds
 
-	private static int serverPORT = 5001; // port on which clients connect to server
+	private static int serverPORT = 5003; // port on which clients connect to server
 	private static int clientPORT = 5002; // port on which client peers connect amongst them
 
 	private Socket serverSocket; // Assumption: can connect to just one server at a time
@@ -69,8 +69,12 @@ public class Client
 					// file no longer exists
 					System.out.println("\nFile no longer exists!!!\n");
 					Database_client.deleteFromTable(identity);
-					String command = "DELETE " + file.getAbsolutePath();
-					System.out.println("Issueing command : \n" + command);
+					//String command = "DELETE " + file.getAbsolutePath();
+					//System.out.println("Issueing command : \n" + command);
+					HashMap<String, String> command = new HashMap<String, String> ();
+					command.put("command", "DELETE");
+					command.put("arg0", file.getAbsolutePath());
+					
 					issueCommandToServer(command);
 				}
 			}
@@ -90,17 +94,19 @@ public class Client
 		do
 		{
 			System.out.println("Specify the download directory: ");
-		
+			
 			try 
 			{
+				downloadDir = br.readLine();
 				File file = new File(downloadDir);
 				if(!file.exists() || !file.isDirectory())
 				{
 					System.out.println("Please enter a valid download directory.");
 					downloadDir = null;			
-					return ;
+					continue ;
 				}
 				connectToServer();
+				System.out.println("hello");
 				showChoices();
 				flag = false;
 			}
@@ -118,8 +124,8 @@ public class Client
 		{
 			String servaddr = br.readLine();
 			serverSocket = new Socket(servaddr, serverPORT);
-			serversockreader = new BufferedReader(new InputStreamReader(serverSocket.getInputStream()));
-			serversockwriter = new BufferedWriter(new OutputStreamWriter(serverSocket.getOutputStream()));
+			serversockwriterForObjects = new ObjectOutputStream(serverSocket.getOutputStream());
+			serversockwriterForObjects.flush();
 			serversockreaderForObjects = new ObjectInputStream(serverSocket.getInputStream());
 			System.out.println("Client socket has been created!!!");
 		} 
@@ -132,12 +138,13 @@ public class Client
 	// show choices to the user
 	private void showChoices() 
 	{
-		System.out.println("Enter your choices:\n");
-		System.out.println("1. Search for a file\n2. Share a file\n3. Send a message\n4. Get all online users\n5. Get a user's file list\n6. Download a file");
 		try 
 		{
 			while(true)
 			{
+				System.out.println("Enter your choices:\n");
+				System.out.println("1. Search for a file\n2. Share a file\n3. Send a message\n4. Get all online users\n5. Get a user's file list\n6. Download a file");
+				
 				int choice = br.read() - '0';
 				
 				switch(choice)
@@ -177,21 +184,31 @@ public class Client
 			return ;
 		}
 		System.out.println("Enter the whole file path, that you wish to download from the peer");
-		String fileName = br.readLine();
-		String command = "GETFILE " + IPaddr + " " + fileName;
+		String filePath = br.readLine();
+		//String command = "GETFILE " + IPaddr + " " + fileName;
+		HashMap<String, String> command = new HashMap<String, String> ();
+		command.put("command", "GETFILE");
+		command.put("arg0", IPaddr);
+		command.put("arg1", filePath);
 		issueCommandToServer(command);
 	}
 
 	private void getFileList() throws IOException 
 	{
 		String IP = br.readLine();
-		String command = "LIST " + IP;
+		//String command = "LIST " + IP;
+		HashMap<String, String> command = new HashMap<String, String> ();
+		command.put("command", "LIST");
+		command.put("arg0", IP);
 		issueCommandToServer(command);
 	}
 
 	private void getAllUsers() 
 	{
-		String command = "USERS";
+		//String command = "USERS";
+		HashMap<String, String> command = new HashMap<String, String> ();
+		command.put("command", "USERS");
+		
 		issueCommandToServer(command);
 	}
 
@@ -199,10 +216,12 @@ public class Client
 	{
 		// send the command to the server to broadcast the message
 		String msg = br.readLine();
-		String cmd = "BROADCAST " + msg;
+		//String cmd = "BROADCAST " + msg;
+		HashMap<String, String> command = new HashMap<String, String> ();
+		command.put("command", "BROADCAST");
+		command.put("arg0", msg);
 		
-		// issue command to the server
-		issueCommandToServer(cmd);
+		issueCommandToServer(command);
 	}
 
 	private void shareFile() 
@@ -283,7 +302,14 @@ public class Client
 		{
 			// new file added to the log
 			Database_client.insertIntoTable(filepath, filename, size, type);
-			String command = "ADD " + filepath + " " + size + " " + type;
+			//String command = "ADD " + filepath + " " + filename + " " + size + " " + type;
+			HashMap<String, String> command = new HashMap<String, String> ();
+			command.put("command", "ADD");
+			command.put("arg0", filepath);
+			command.put("arg1", filename);
+			command.put("arg2", size.toString());
+			command.put("arg3", type);
+			
 			issueCommandToServer(command);
 		}
 	}
@@ -296,7 +322,11 @@ public class Client
 			br.read();
 			String searchForThis = br.readLine();
 			System.out.println("Your command: search for " + searchForThis + " has been issued");
-			String command = "SEARCH " + searchForThis;
+			//String command = "SEARCH " + searchForThis;
+			HashMap<String, String> command = new HashMap<String, String> ();
+			command.put("command", "SEARCH");
+			command.put("arg0", searchForThis);
+			
 			issueCommandToServer(command);
 		} 
 		catch (IOException e) 
@@ -306,29 +336,28 @@ public class Client
 		}
 	}
 	
-	private void issueCommandToServer(String command) 
+	private void issueCommandToServer(HashMap<String, String> command) 
 	{
 		/*	valid commands:
-		 *	1. ADD - add a new file to the server log USAGE: ADD <filename> <path> <size>
+		 *	1. ADD - add a new file to the server log USAGE: ADD <filepath> <filename> <size> <type>
 		 *	2. SEARCH - search for a file in server log USAGE: SEARCH <filename>
-		 *	3. DELETE - delete a file from server log USAGE: DELETE <file name>
+		 *	3. DELETE - delete a file from server log USAGE: DELETE <filename>
 		 *	4. BROADCAST - broadcast a message to all users 
 		 *	5. USERS - get all the currently online users 
 		 *	6. LIST - get the file list of a client with a particular ip USAGE: LIST <IP address>
 		 *	7. GETFILE - receive the actual file from the user USAGE : GETFILE <IP address> <full filename>
 		 * */
 		
-		String[] split = command.split(" "); 
-		String keyword = split[0];
+		String keyword = command.get("command");
 		String result = null;
 		try
 		{
 			if(keyword.equals("ADD"))
 			{
 				System.out.println("New file is being added to the server log...");
-				serversockwriter.write(command + "\n");
-				serversockwriter.flush();
-				result = serversockreader.readLine();
+				serversockwriterForObjects.writeObject(command);
+				serversockwriterForObjects.flush();
+				result = serversockreaderForObjects.readUTF();
 				if(result == null || !result.equals("addition done"))
 				{
 					System.out.println("Sorry, server error. Please try again later...");
@@ -343,8 +372,8 @@ public class Client
 			else if(keyword.equals("SEARCH"))
 			{
 				System.out.println("Searching for a file in the server log...");
-				serversockwriter.write(command + "\n");
-				serversockwriter.flush();
+				serversockwriterForObjects.writeObject(command);
+				serversockwriterForObjects.flush();
 				@SuppressWarnings("unchecked")
 				ArrayList<HashMap<String, String>> resultForSearch = (ArrayList<HashMap<String,String>>) serversockreaderForObjects.readObject();
 				
@@ -367,9 +396,9 @@ public class Client
 			else if(keyword.equals("DELETE"))
 			{
 				System.out.println("Deleting a file in the server log...");
-				serversockwriter.write(command + "\n");
-				serversockwriter.flush();
-				result = serversockreader.readLine();
+				serversockwriterForObjects.writeObject(command);
+				serversockwriterForObjects.flush();
+				result = serversockreaderForObjects.readUTF();
 				if(result == null || !result.equals("deletion done"))
 				{
 					System.out.println("Sorry, server error. Please try again later...");
@@ -384,9 +413,9 @@ public class Client
 			else if(keyword.equals("BROADCAST"))
 			{
 				System.out.println("Broadcasting the message...");
-				serversockwriter.write(command + "\n");
-				serversockwriter.flush();
-				result = serversockreader.readLine();
+				serversockwriterForObjects.writeObject(command);
+				serversockwriterForObjects.flush();
+				result = serversockreaderForObjects.readUTF();
 				if(result == null || !result.equals("broadcast done"))
 				{
 					System.out.println("Sorry, server error. Please try again later...");
@@ -401,8 +430,8 @@ public class Client
 			else if(keyword.equals("USERS"))
 			{
 				System.out.println("Getting all the currently online users...");
-				serversockwriter.write(command + "\n");
-				serversockwriter.flush();
+				serversockwriterForObjects.writeObject(command);
+				serversockwriterForObjects.flush();
 				
 				// returns an arraylist of ip addresses of currently online users
 				@SuppressWarnings("unchecked")
@@ -429,11 +458,11 @@ public class Client
 			}
 			else if(keyword.equals("LIST"))
 			{
-				String IP = split[1];
+				String IP = command.get("arg0");
 				
 				System.out.println("Getting the file list of " + IP);
-				serversockwriter.write(command + "\n");
-				serversockwriter.flush();
+				serversockwriterForObjects.writeObject(command);
+				serversockwriterForObjects.flush();
 				
 				// returns file paths of the user specified
 				@SuppressWarnings("unchecked")
@@ -471,12 +500,17 @@ public class Client
 				 *  
 				 *  And that's how its done....
 				 */
-				String clientIP = split[1]; // ip of client
+				String clientIP = command.get("arg0"); // ip of client
 				
-				String peerName = split[2]; // file name
-				String[] splitPeerName = peerName.split("/");
-				String myFileName = splitPeerName[splitPeerName.length-1];
+				String peerFilePath = command.get("arg1"); // file name
+				String[] splitPeerPath = peerFilePath.split("/");
+				String myFileName = splitPeerPath[splitPeerPath.length-1];
 				File myFile = new File(downloadDir + "/" + myFileName);
+				if(!myFile.exists())
+				{
+					myFile.createNewFile();
+				}
+				
 				BufferedOutputStream myFileWriter = new BufferedOutputStream(new FileOutputStream(myFile));
 
 				clientSocket = new Socket(clientIP, clientPORT);
@@ -484,7 +518,7 @@ public class Client
 				BufferedWriter clientSocketWriter = new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream()));
 				
 				int MAXSIZE = clientSocketReader.read();
-				clientSocketWriter.write(peerName);
+				clientSocketWriter.write(peerFilePath);
 				
 				int transmissions = clientSocketReader.read();
 				
