@@ -18,7 +18,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 import org.apache.commons.validator.routines.InetAddressValidator;
 
-import database.Database;
+import database.Database_client;
 
 public class Client 
 {
@@ -41,8 +41,8 @@ public class Client
 	{		
 		try
 		{
-			Database.createDB();
-			Database.createTable();
+			Database_client.createDB();
+			Database_client.createTable();
 		}
 		catch(Exception E)
 		{
@@ -58,7 +58,7 @@ public class Client
 		@Override
 		public void run()
 		{
-			ArrayList<HashMap<String, String>> log = Database.selectFromTable(null);
+			ArrayList<HashMap<String, String>> log = Database_client.selectFromTable(null);
 			for(HashMap<String, String> hm:log)
 			{
 				String filepath = hm.get("filepath");
@@ -68,7 +68,7 @@ public class Client
 				{
 					// file no longer exists
 					System.out.println("\nFile no longer exists!!!\n");
-					Database.deleteFromTable(identity);
+					Database_client.deleteFromTable(identity);
 					String command = "DELETE " + file.getAbsolutePath();
 					System.out.println("Issueing command : \n" + command);
 					issueCommandToServer(command);
@@ -262,6 +262,7 @@ public class Client
 	{
 		System.out.println(file.getAbsolutePath());
 		String filepath = file.getAbsolutePath();
+		String filename = file.getName();
 		Integer size = (int) file.length();
 		String type = null;
 
@@ -273,7 +274,7 @@ public class Client
 		{
 			e.printStackTrace();
 		}
-		ArrayList<HashMap<String, String>> result = Database.selectFromTable(filepath);
+		ArrayList<HashMap<String, String>> result = Database_client.selectFromTable(filepath);
 		if(result.size() > 0)
 		{
 			System.out.println("File " + filepath + " already hashed!!!");
@@ -281,7 +282,7 @@ public class Client
 		else
 		{
 			// new file added to the log
-			Database.insertIntoTable(filepath, size, type);
+			Database_client.insertIntoTable(filepath, filename, size, type);
 			String command = "ADD " + filepath + " " + size + " " + type;
 			issueCommandToServer(command);
 		}
@@ -305,7 +306,7 @@ public class Client
 		}
 	}
 	
-	private String issueCommandToServer(String command) 
+	private void issueCommandToServer(String command) 
 	{
 		/*	valid commands:
 		 *	1. ADD - add a new file to the server log USAGE: ADD <filename> <path> <size>
@@ -328,14 +329,15 @@ public class Client
 				serversockwriter.write(command + "\n");
 				serversockwriter.flush();
 				result = serversockreader.readLine();
-				if(result.equalsIgnoreCase("addition done"))
+				if(result == null || !result.equals("addition done"))
 				{
-					System.out.println("Addition has been done.");
+					System.out.println("Sorry, server error. Please try again later...");
+					return;
 				}
 				else
 				{
-					System.out.println("Sorry, server error. Please try again later...");
-					result = "addition error";
+					System.out.println("Addition has been done.");
+					return ;
 				}
 			}
 			else if(keyword.equals("SEARCH"))
@@ -345,12 +347,22 @@ public class Client
 				serversockwriter.flush();
 				@SuppressWarnings("unchecked")
 				ArrayList<HashMap<String, String>> resultForSearch = (ArrayList<HashMap<String,String>>) serversockreaderForObjects.readObject();
-				System.out.println("Results for your search query are: ");
-				System.out.println("IP address    File Name    Size    Type  ");
-				for(HashMap<String, String> hm:resultForSearch)
+				
+				if(resultForSearch == null)
 				{
-					System.out.println(hm.get("IP") + " | " + hm.get("filename") + " | " + hm.get("filesize") + " | " + hm.get("filetype"));
-				}				
+					System.out.println("Sorry, server error. Please try again later...");
+					return ;
+				}
+				else
+				{
+					System.out.println("Results for your search query are: ");
+					System.out.println("IP address    File Name    Size    Type  ");
+					for(HashMap<String, String> hm:resultForSearch)
+					{
+						System.out.println(hm.get("IP") + " | " + hm.get("filename") + " | " + hm.get("filesize") + " | " + hm.get("filetype"));
+					}		
+					return ;
+				}
 			}
 			else if(keyword.equals("DELETE"))
 			{
@@ -358,14 +370,15 @@ public class Client
 				serversockwriter.write(command + "\n");
 				serversockwriter.flush();
 				result = serversockreader.readLine();
-				if(result.equalsIgnoreCase("deletion done"))
+				if(result == null || !result.equals("deletion done"))
 				{
-					System.out.println("Deletion has been done...");
+					System.out.println("Sorry, server error. Please try again later...");
+					return ;
 				}
 				else
 				{
-					System.out.println("Sorry, server error. Please try again later...");
-					result = "deletion error";
+					System.out.println("Deletion has been done...");
+					return;
 				}
 			}
 			else if(keyword.equals("BROADCAST"))
@@ -374,14 +387,15 @@ public class Client
 				serversockwriter.write(command + "\n");
 				serversockwriter.flush();
 				result = serversockreader.readLine();
-				if(result.equalsIgnoreCase("broadcast done"))
+				if(result == null || !result.equals("broadcast done"))
 				{
-					System.out.println("Your message has been sent...");
+					System.out.println("Sorry, server error. Please try again later...");
+					return ;
 				}
 				else
 				{
-					System.out.println("Sorry, server error. Please try again later...");
-					result = "broadcast error";
+					System.out.println("Your message has been sent...");
+					return ;
 				}
 			}
 			else if(keyword.equals("USERS"))
@@ -394,14 +408,24 @@ public class Client
 				@SuppressWarnings("unchecked")
 				ArrayList<String> serverOnlineUsers = (ArrayList<String>) serversockreaderForObjects.readObject();
 				
-				System.out.println("IP addresses of currently online users are: ");
-				
-				int i = 1;
-				for(String str:serverOnlineUsers)
+				if(serverOnlineUsers == null)
 				{
-					System.out.println(i + " ----> " + str);
-					i ++;
-				}	
+					System.out.println("Sorry, server error. Please try again later...");
+					return ;
+				}
+				else
+				{
+					System.out.println("IP addresses of currently online users are: ");
+					
+					int i = 1;
+					for(String str:serverOnlineUsers)
+					{
+						System.out.println(i + " ----> " + str);
+						i ++;
+					}
+					
+					return ;
+				}
 			}
 			else if(keyword.equals("LIST"))
 			{
@@ -413,16 +437,25 @@ public class Client
 				
 				// returns file paths of the user specified
 				@SuppressWarnings("unchecked")
-				ArrayList<String> fileListUser = (ArrayList<String>) serversockreaderForObjects.readObject();
+				ArrayList<HashMap<String, String>> fileListUser = (ArrayList<HashMap<String, String>>) serversockreaderForObjects.readObject();
 				
-				System.out.println("Files shared by the user " + IP + " are: ");
-				
-				int i = 1;
-				for(String str:fileListUser)
+				if(fileListUser == null)
 				{
-					System.out.println(i + " ----> " + str);
-					i ++;
-				}	
+					System.out.println("Sorry, server error. Please try again later...");
+					return ;
+				}
+				else
+				{
+					System.out.println("Files shared by the user " + IP + " are: ");
+					System.out.println("File Name    Size    Type  \n");
+					
+					for(HashMap<String, String> hm:fileListUser)
+					{
+						System.out.println(hm.get("filename") + " | " + hm.get("filesize") + " | " + hm.get("filetype"));
+					}
+					
+					return ;
+				}
 			}
 			else if(keyword.equals("GETFILE"))
 			{
@@ -430,10 +463,11 @@ public class Client
 				 *  To get file from the user:
 				 *  1. Create a connection to the user (clientsocket)
 				 *  2. Receive the max size of a packet (MAXSIZE) 
-				 *  3. Receive number of transmissions (packets)
-				 *  4. Open the required file in reading and binary mode
-				 *  5. Loop for this number of times and receive packets in chunk
-				 *  6. Save chunk into the file
+				 *  3. Send the filename you wish to download
+				 *  4. Receive number of transmissions (packets)
+				 *  5. Open the required file in reading and binary mode
+				 *  6. Loop for this number of times and receive packets in chunk
+				 *  7. Save chunk into the file
 				 *  
 				 *  And that's how its done....
 				 */
@@ -447,8 +481,11 @@ public class Client
 
 				clientSocket = new Socket(clientIP, clientPORT);
 				BufferedInputStream clientSocketReader = new BufferedInputStream(clientSocket.getInputStream());
+				BufferedWriter clientSocketWriter = new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream()));
 				
 				int MAXSIZE = clientSocketReader.read();
+				clientSocketWriter.write(peerName);
+				
 				int transmissions = clientSocketReader.read();
 				
 				int i = 0;
@@ -467,12 +504,12 @@ public class Client
 			else
 			{
 				System.out.println("Sorry, unknown command");
+				return ;
 			}
 		}
 		catch(Exception E)
 		{
 			E.printStackTrace();
 		}
-		return result;
 	}
 }
