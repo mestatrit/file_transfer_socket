@@ -146,7 +146,8 @@ public class Client
 				System.out.println("1. Search for a file\n2. Share a file\n3. Send a message\n4. Get all online users\n5. Get a user's file list\n6. Download a file");
 				
 				int choice = br.read() - '0';
-				
+				br.read();
+
 				switch(choice)
 				{
 					case 1: searchForFile(); 
@@ -195,6 +196,7 @@ public class Client
 
 	private void getFileList() throws IOException 
 	{
+		System.out.println("Enter IP address of the user, whose list is required:");
 		String IP = br.readLine();
 		//String command = "LIST " + IP;
 		HashMap<String, String> command = new HashMap<String, String> ();
@@ -229,7 +231,6 @@ public class Client
 		System.out.println("Enter the full path of the file of the corresponding directory that you want to share: ");
 		try 
 		{
-			br.read();
 			String shareThis = br.readLine();
 			File file = new File(shareThis);
 			
@@ -319,7 +320,6 @@ public class Client
 		System.out.println("Enter the filename to search for:");
 		try 
 		{
-			br.read();
 			String searchForThis = br.readLine();
 			System.out.println("Your command: search for " + searchForThis + " has been issued");
 			//String command = "SEARCH " + searchForThis;
@@ -388,7 +388,7 @@ public class Client
 					System.out.println("IP address    File Name    Size    Type  ");
 					for(HashMap<String, String> hm:resultForSearch)
 					{
-						System.out.println(hm.get("IP") + " | " + hm.get("filename") + " | " + hm.get("filesize") + " | " + hm.get("filetype"));
+						System.out.println(hm.get("IPaddr") + " | " + hm.get("filename") + " | " + hm.get("size") + " | " + hm.get("type"));
 					}		
 					return ;
 				}
@@ -480,7 +480,7 @@ public class Client
 					
 					for(HashMap<String, String> hm:fileListUser)
 					{
-						System.out.println(hm.get("filename") + " | " + hm.get("filesize") + " | " + hm.get("filetype"));
+						System.out.println(hm.get("filename") + " | " + hm.get("size") + " | " + hm.get("type"));
 					}
 					
 					return ;

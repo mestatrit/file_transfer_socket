@@ -109,8 +109,10 @@ public class ServerThread extends Thread
 				else if(cmd.equals("SEARCH"))
 				{
 					String filename_toBeSearched = command.get("arg0");
+					ArrayList<HashMap<String, String>> result = Database_server.searchFromTable(filename_toBeSearched);
 					
-					//TODO: calculate the closeness of the keyword with all the files existing in the database and return the results appropriately 
+					serversockwriterForObjects.writeObject(result);
+					serversockwriterForObjects.flush();
 				}
 				else if(cmd.equals("DELETE"))
 				{
@@ -145,7 +147,7 @@ public class ServerThread extends Thread
 				else if(cmd.equals("LIST"))
 				{
 					String IPaddr = command.get("arg0");
-					
+					System.out.println("IP address: " + IPaddr);
 					ArrayList<HashMap<String, String>> result = Database_server.selectFromTable_byUser(IPaddr);
 					serversockwriterForObjects.writeObject(result);
 				}

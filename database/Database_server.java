@@ -308,7 +308,7 @@ public class Database_server
 		    //System.out.println("Creating statement...");
 		    stmt = conn.createStatement();
 
-		    String sql = Query.selectFromTable_sever_byFile(file);
+		    String sql = Query.selectFromTable_server_byFile(file);
 		    //System.out.println("Query: " + sql);
 		    ResultSet rs = stmt.executeQuery(sql);
 		    //STEP 5: Extract data from result set
@@ -318,7 +318,7 @@ public class Database_server
 		    	//Retrieve by column name
 		    	HashMap<String, String> hm = new HashMap<String, String> ();
 		    	hm.put("identity", Integer.toString(rs.getInt("id")));
-		    	hm.put("IPaddr", Integer.toString(rs.getInt("IPaddr")));
+		    	hm.put("IPaddr", rs.getString("IPaddr"));
 		    	hm.put("filepath", rs.getString("filepath"));
 		    	hm.put("filename", rs.getString("filename"));
 		    	hm.put("type", rs.getString("type"));
@@ -382,8 +382,8 @@ public class Database_server
 		    //System.out.println("Creating statement...");
 		    stmt = conn.createStatement();
 
-		    String sql = Query.selectFromTable_sever_byFile(IPaddr);
-		    //System.out.println("Query: " + sql);
+		    String sql = Query.selectFromTable_server_byUser(IPaddr);
+		    System.out.println("Query: " + sql);
 		    ResultSet rs = stmt.executeQuery(sql);
 		    //STEP 5: Extract data from result set
 		    ArrayList<HashMap<String, String>> selectionList = new ArrayList<HashMap<String, String>> ();
@@ -392,7 +392,7 @@ public class Database_server
 		    	//Retrieve by column name
 		    	HashMap<String, String> hm = new HashMap<String, String> ();
 		    	hm.put("identity", Integer.toString(rs.getInt("id")));
-		    	hm.put("IPaddr", Integer.toString(rs.getInt("IPaddr")));
+		    	hm.put("IPaddr", rs.getString("IPaddr"));
 		    	hm.put("filepath", rs.getString("filepath"));
 		    	hm.put("filename", rs.getString("filename"));
 		    	hm.put("type", rs.getString("type"));
@@ -466,7 +466,7 @@ public class Database_server
 		    	//Retrieve by column name
 		    	HashMap<String, String> hm = new HashMap<String, String> ();
 		    	hm.put("identity", Integer.toString(rs.getInt("id")));
-		    	hm.put("IPaddr", Integer.toString(rs.getInt("IPaddr")));
+		    	hm.put("IPaddr", rs.getString("IPaddr"));
 		    	hm.put("filepath", rs.getString("filepath"));
 		    	hm.put("filename", rs.getString("filename"));
 		    	hm.put("type", rs.getString("type"));
@@ -534,7 +534,7 @@ public class Database_server
 
 		    String sql = Query.deleteFromTable_server_byUserAndFile(IPaddr, filepath);
 		    //System.out.println("Query: " + sql);
-		    
+		    stmt.executeUpdate(sql);
 		    result = 0;
 		    
 		}
@@ -573,6 +573,82 @@ public class Database_server
 		}//end try
 		//System.out.println("Goodbye!");
 		return result;
+	}//end selectFromTable
+	
+	public static ArrayList<HashMap<String, String>> searchFromTable(String filename) 
+	{
+		Connection conn = null;
+		Statement stmt = null;
+		
+		ArrayList<HashMap<String, String>> selectionList = new ArrayList<HashMap<String,String>> ();
+		
+		try
+		{
+			//STEP 2: Register JDBC driver
+			Class.forName(JDBC_DRIVER);
+			
+			//STEP 3: Open a connection
+		    //System.out.println("Connecting to a selected database...");
+		    conn = DriverManager.getConnection(DB_URL, USER, PASS);
+		    //System.out.println("Connected database successfully...");
+		      
+		    //STEP 4: Execute a query
+		    //System.out.println("Creating statement...");
+		    stmt = conn.createStatement();
+
+		    String sql = Query.searchFromTable_server(filename);
+		    System.out.println("Query: " + sql);
+		    ResultSet rs = stmt.executeQuery(sql);
+		    //STEP 5: Extract data from result set
+		    while(rs.next())
+		    {
+		    	//Retrieve by column name
+		    	HashMap<String, String> hm = new HashMap<String, String> ();
+		    	hm.put("identity", Integer.toString(rs.getInt("id")));
+		    	hm.put("IPaddr", rs.getString("IPaddr"));
+		    	hm.put("filepath", rs.getString("filepath"));
+		    	hm.put("filename", rs.getString("filename"));
+		    	hm.put("type", rs.getString("type"));
+		    	hm.put("size", Integer.toString(rs.getInt("size")));
+		    	selectionList.add(hm);
+		    }
+		    rs.close();
+		    
+		}
+		catch(SQLException se)
+		{
+			//Handle errors for JDBC
+			se.printStackTrace();
+		}
+		catch(Exception e)
+		{
+			//Handle errors for Class.forName
+			e.printStackTrace();
+		}
+		finally
+		{
+			//finally block used to close resources
+			try
+			{
+				if(stmt!=null)
+					conn.close();
+		    }
+			catch(SQLException se)
+			{
+			}// do nothing
+		    try
+		    {
+		    	if(conn!=null)
+		    		conn.close();
+		    }
+		    catch(SQLException se)
+		    {
+		    	se.printStackTrace();
+		    }//end finally try
+		}//end try
+		//System.out.println("Goodbye!");
+		
+		return selectionList;
 	}//end selectFromTable
 	
 }

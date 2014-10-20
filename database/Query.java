@@ -73,9 +73,9 @@ public class Query
 		return select;
 	}
 	
-	protected static String selectFromTable_sever_byFile(String file)
+	protected static String selectFromTable_server_byFile(String file)
 	{
-		String select = "SELECT id, filepath, filename, size, type FROM " + TableName_server;
+		String select = "SELECT id, IPaddr, filepath, filename, size, type FROM " + TableName_server;
 		if(file == null)
 		{
 			// select all
@@ -87,7 +87,7 @@ public class Query
 	
 	protected static String selectFromTable_server_byUser(String IPaddr)
 	{
-		String select = "SELECT id, filepath, filename, size, type FROM " + TableName_server;
+		String select = "SELECT id, IPaddr, filepath, filename, size, type FROM " + TableName_server;
 		if(IPaddr == null)
 		{
 			// select all
@@ -99,7 +99,7 @@ public class Query
 	
 	protected static String selectFromTable_server_byUserAndFile(String IPaddr, String filepath)
 	{
-		String select = "SELECT id, filepath, filename, size, type FROM " + TableName_server + " WHERE IPaddr = \"" + IPaddr + "\" AND filepath = \"" + filepath + "\";";
+		String select = "SELECT id, IPaddr, filepath, filename, size, type FROM " + TableName_server + " WHERE IPaddr = \"" + IPaddr + "\" AND filepath = \"" + filepath + "\";";
 		return select;
 	}
 	
@@ -107,6 +107,12 @@ public class Query
 	{
 		String delete = "DELETE FROM " + TableName_server + " WHERE IPaddr = \"" + IPaddr + "\" AND filepath = \"" + filepath + "\";";
 		return delete;
+	}
+
+	public static String searchFromTable_server(String filename) 
+	{
+		String select = "SELECT * FROM " + TableName_server + " WHERE filename = \"" + filename + "\";";
+		return select;
 	}
 
 	
