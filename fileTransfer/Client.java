@@ -55,19 +55,7 @@ public class Client
 	class recheck implements Runnable 
 	{
 		public void run()
-		{
-			HashMap<String, String> command = new HashMap<String, String> ();
-			command.put("command",  "PING");
-			try 
-			{
-				serversockwriterForObjects.writeObject(command);
-			}
-			catch (IOException e) 
-			{
-				System.out.println("Thread for timer has exited!!!");
-				e.printStackTrace();
-			}
-			
+		{	
 			ArrayList<HashMap<String, String>> log = Database_client.selectFromTable(null);
 			for(HashMap<String, String> hm:log)
 			{
@@ -81,11 +69,11 @@ public class Client
 					Database_client.deleteFromTable(identity);
 					//String command = "DELETE " + file.getAbsolutePath();
 					//System.out.println("Issuing command : \n" + command);
-					HashMap<String, String> command2 = new HashMap<String, String> ();
-					command2.put("command", "DELETE");
-					command2.put("arg0", file.getAbsolutePath());
+					HashMap<String, String> command = new HashMap<String, String> ();
+					command.put("command", "DELETE");
+					command.put("arg0", file.getAbsolutePath());
 					
-					issueCommandToServer(command2);
+					issueCommandToServer(command);
 				}
 			}
 		}

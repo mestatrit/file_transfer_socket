@@ -13,6 +13,8 @@ import database.Database_server;
 public class ServerThread extends Thread 
 {
 	private Socket socket;
+	private static int id = 0;
+	private int thisID;
 	private String myIP, clientIP;
 	private ObjectInputStream serversockreaderForObjects;
 	private ObjectOutputStream serversockwriterForObjects;
@@ -26,6 +28,10 @@ public class ServerThread extends Thread
 	
 	public ServerThread(Socket socket)
 	{
+		thisID = id;
+		System.out.println("Thfread with id : " + thisID + " is constructed...");
+		id ++;
+		
 		this.socket = socket;
 		this.myIP = socket.getLocalAddress().toString();
 		this.clientIP = socket.getInetAddress().toString();
@@ -73,6 +79,11 @@ public class ServerThread extends Thread
 			try 
 			{
 				HashMap<String, String> command = readFromClient();
+				if(!running)
+				{
+					break;
+				}
+				
 				String cmd = command.get("command"); 
 				
 				System.out.println(command.toString());
@@ -197,34 +208,20 @@ public class ServerThread extends Thread
 		try 
 		{
 			cmd = (HashMap<String, String>) serversockreaderForObjects.readObject();
-			
-			while(cmd.get("command").equalsIgnoreCase("PING"))
-			{
-				time = System.currentTimeMillis();
-				System.out.println("PING found!!!");
-				cmd = (HashMap<String, String>) serversockreaderForObjects.readObject();
-			}
-			while(cmd.get("command") != null)
-			{
-				cmd = (HashMap<String, String>) serversockreaderForObjects.readObject();
-			}
 		}
 		catch(EOFException e)
 		{
-			running = false;
+			terminate();
 			System.out.println("hello3!");
 		}
-
 		catch (ClassNotFoundException e) 
 		{
 			e.printStackTrace();
-			System.out.println("hello!");
 		}
 		catch (IOException e) 
 		{
 			e.printStackTrace();
-			System.out.println("hello2!");
-		}
+		}	
 		
 		return cmd;
 	}
@@ -232,6 +229,6 @@ public class ServerThread extends Thread
 	public void terminate() 
 	{
 		running = false;
-		System.out.println("This thread is going to be closed....");
+		System.out.println("This thread is going to be closed....ID: " + thisID);
 	}
 }

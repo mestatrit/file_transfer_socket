@@ -48,11 +48,9 @@ public class Server
 			for(Map.Entry<ServerThread, Socket> entry : connectedUsers.entrySet())
 			{
 				ServerThread st = entry.getKey();
-				Socket sock = entry.getValue();
-				if(System.currentTimeMillis() - st.getTime() > 30000)
+				if(!st.isAlive())
 				{
 					connectedUsers.remove(st);
-					st.terminate();
 				}
 			}
 		}
