@@ -4,6 +4,8 @@ import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -541,11 +543,11 @@ public class Client
 				BufferedOutputStream myFileWriter = new BufferedOutputStream(new FileOutputStream(myFile));
 
 				clientSocket = new Socket(clientIP, clientPORT);
-				BufferedInputStream clientSocketReader = new BufferedInputStream(clientSocket.getInputStream());
-				BufferedWriter clientSocketWriter = new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream()));
+				DataInputStream clientSocketReader = new DataInputStream(new BufferedInputStream(clientSocket.getInputStream()));
+				DataOutputStream clientSocketWriter = new DataOutputStream(new BufferedOutputStream(clientSocket.getOutputStream()));
 				
-				int MAXSIZE = clientSocketReader.read();
-				clientSocketWriter.write(peerFilePath);
+				int MAXSIZE = clientSocketReader.readInt();
+				clientSocketWriter.writeUTF(peerFilePath);
 				clientSocketWriter.flush();
 				
 				int flag = clientSocketReader.read();
@@ -567,12 +569,13 @@ public class Client
 				while(i < transmissions)
 				{
 					clientSocketReader.read(buffer);
+					int length = clientSocketReader.readInt();
 					System.out.println("Received " + i);
-					myFileWriter.write(buffer);
+					myFileWriter.write(buffer, 0, length);
 					myFileWriter.flush();
+					i ++;
 				}
 				myFileWriter.close();
-				myFile.delete();
 				clientSocketReader.close();
 				clientSocketWriter.close();
 				clientSocket.close();

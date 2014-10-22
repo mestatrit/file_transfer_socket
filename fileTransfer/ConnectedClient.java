@@ -3,6 +3,8 @@ package fileTransfer;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -15,8 +17,8 @@ public class ConnectedClient extends Thread
 	private int thisID, MAX;
 	private Socket socket;
 	private String path;
-	private BufferedReader br;
-	private BufferedOutputStream bw;
+	private DataInputStream br;
+	private DataOutputStream bw;
 	
 	public ConnectedClient(Socket skt) 
 	{
@@ -27,8 +29,8 @@ public class ConnectedClient extends Thread
 		MAX = 1024;
 		try 
 		{
-			br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-			bw = new BufferedOutputStream(socket.getOutputStream());
+			br = new DataInputStream(new BufferedInputStream(socket.getInputStream()));
+			bw = new DataOutputStream(new BufferedOutputStream(socket.getOutputStream()));
 		}
 		catch (IOException e) 
 		{
@@ -41,9 +43,9 @@ public class ConnectedClient extends Thread
 	{
 		try 
 		{
-			bw.write(MAX);
+			bw.writeInt(MAX);
 			bw.flush();
-			path = br.readLine();
+			path = br.readUTF();
 			File file = new File(path);
 			if(!file.exists() || !file.isFile())
 			{
@@ -51,20 +53,36 @@ public class ConnectedClient extends Thread
 				bw.flush();
 				return ;
 			}
+			else
+			{
+				bw.write(0);
+				bw.flush();
+			}
 			byte[] buffer = new byte[MAX];
 			BufferedInputStream bis = new BufferedInputStream(new FileInputStream(file));
 			long size = file.length();
 			int packets = (int)Math.ceil(size/MAX);
-			bw.write(packets);
+			bw.writeInt(packets);
 			bw.flush();
 			int i = 0;
-			while(i < packets)
+			while(i < packets-1)
 			{
 				bis.read(buffer);
+				System.out.println("Length written: " + buffer.length);
 				bw.write(buffer);
+				bw.flush();
+				bw.writeInt(MAX);
 				bw.flush();
 				i ++;
 			}
+			
+			bis.read(buffer);
+			bw.write(buffer);
+			bw.flush();
+			int length = (int)size - (MAX*(packets-1));
+			bw.writeInt(length);
+			bw.flush();
+			
 			bis.close();
 			terminate();
 			socket.close();
