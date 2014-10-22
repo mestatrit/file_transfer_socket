@@ -28,6 +28,7 @@ public class Client
 	private static ObjectInputStream serversockreaderForObjects;
 	private static ObjectOutputStream serversockwriterForObjects;
 	private static ScheduledExecutorService timerForRechecking;
+	private ClientThread ct;
 
 	private static int serverPORT = 5003; // port on which clients connect to server
 	private static int clientPORT = 5002; // port on which client peers connect amongst them
@@ -82,7 +83,14 @@ public class Client
 	public static void main(String[] args)
 	{
 		Client client = new Client();
+		client.accept();
 		client.execute();
+	}
+
+	private void accept() 
+	{
+		ct = new ClientThread();
+		ct.start();
 	}
 
 	private void execute() 
@@ -179,7 +187,6 @@ public class Client
 
 	private void exitWithGrace() 
 	{
-		// TODO Auto-generated method stub
 		try
 		{
 			serversockwriterForObjects.close();
@@ -539,6 +546,19 @@ public class Client
 				
 				int MAXSIZE = clientSocketReader.read();
 				clientSocketWriter.write(peerFilePath);
+				clientSocketWriter.flush();
+				
+				int flag = clientSocketReader.read();
+				if(flag == 1)
+				{
+					System.out.println("Some error occured!!!!");
+					myFileWriter.close();
+					myFile.delete();
+					clientSocketReader.close();
+					clientSocketWriter.close();
+					clientSocket.close();
+					return ;
+				}
 				
 				int transmissions = clientSocketReader.read();
 				
@@ -551,9 +571,11 @@ public class Client
 					myFileWriter.write(buffer);
 					myFileWriter.flush();
 				}
-				clientSocketReader.close();
-				
 				myFileWriter.close();
+				myFile.delete();
+				clientSocketReader.close();
+				clientSocketWriter.close();
+				clientSocket.close();
 			}
 			else
 			{
@@ -577,7 +599,6 @@ public class Client
 		}
 		catch (Exception e) 
 		{
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} 
 		return null;
