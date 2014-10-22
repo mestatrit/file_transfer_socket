@@ -1,5 +1,7 @@
 package fileTransfer;
 
+import java.io.EOFException;
+import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
@@ -14,6 +16,13 @@ public class ServerThread extends Thread
 	private String myIP, clientIP;
 	private ObjectInputStream serversockreaderForObjects;
 	private ObjectOutputStream serversockwriterForObjects;
+	private long time; 
+	private boolean running = true;
+	
+	public long getTime()
+	{
+		return time;
+	}
 	
 	public ServerThread(Socket socket)
 	{
@@ -26,9 +35,7 @@ public class ServerThread extends Thread
 			serversockwriterForObjects = new ObjectOutputStream(socket.getOutputStream());
 			serversockwriterForObjects.flush();
 			serversockreaderForObjects = new ObjectInputStream(socket.getInputStream());
-			Database_server.createDB();
-			Database_server.createTable();
-		} 
+		}
 		catch (Exception e) 
 		{
 			e.printStackTrace();
@@ -61,15 +68,19 @@ public class ServerThread extends Thread
 		 *	
 		 *	
 		 */
-		while(true)
+		while(running)
 		{
 			try 
 			{
-				@SuppressWarnings("unchecked")
-				HashMap<String, String> command = (HashMap<String, String>) serversockreaderForObjects.readObject();
+				HashMap<String, String> command = readFromClient();
 				String cmd = command.get("command"); 
 				
 				System.out.println(command.toString());
+				
+				if(cmd.equals("PING"))
+				{
+					continue;
+				}
 				
 				if(cmd.equals("ADD"))
 				{
@@ -119,7 +130,7 @@ public class ServerThread extends Thread
 					String filepath_toBeDeleted = command.get("arg0");
 					
 					int result = Database_server.deleteFromTable_byUserAndFile(clientIP, filepath_toBeDeleted);
-					
+					System.out.println("deleting");
 					if(result == 0)
 					{
 						serversockwriterForObjects.writeUTF("deletion done");
@@ -137,11 +148,11 @@ public class ServerThread extends Thread
 					}
 				}
 				else if(cmd.equals("BROADCAST"))
-				{
+				{//TODO
 					String msg = command.get("arg0");
 				}
 				else if(cmd.equals("USERS"))
-				{
+				{//TODO
 					 
 				}
 				else if(cmd.equals("LIST"))
@@ -159,7 +170,68 @@ public class ServerThread extends Thread
 			catch (Exception e) 
 			{
 				e.printStackTrace();
+				System.out.println("exception raised... closing the thread!!!");
+				running = false;
 			}
 		}
+		try 
+		{
+			serversockreaderForObjects.close();
+			serversockwriterForObjects.close();
+			socket.close();
+			return ;
+		} 
+		catch (IOException e) 
+		{
+			e.printStackTrace();
+			System.out.println("exception raised again!!! ");
+			return ;
+		}
+		
+	}
+
+	@SuppressWarnings("unchecked")
+	private HashMap<String, String> readFromClient() 
+	{
+		HashMap<String, String> cmd = null;
+		try 
+		{
+			cmd = (HashMap<String, String>) serversockreaderForObjects.readObject();
+			
+			while(cmd.get("command").equalsIgnoreCase("PING"))
+			{
+				time = System.currentTimeMillis();
+				System.out.println("PING found!!!");
+				cmd = (HashMap<String, String>) serversockreaderForObjects.readObject();
+			}
+			while(cmd.get("command") != null)
+			{
+				cmd = (HashMap<String, String>) serversockreaderForObjects.readObject();
+			}
+		}
+		catch(EOFException e)
+		{
+			running = false;
+			System.out.println("hello3!");
+		}
+
+		catch (ClassNotFoundException e) 
+		{
+			e.printStackTrace();
+			System.out.println("hello!");
+		}
+		catch (IOException e) 
+		{
+			e.printStackTrace();
+			System.out.println("hello2!");
+		}
+		
+		return cmd;
+	}
+
+	public void terminate() 
+	{
+		running = false;
+		System.out.println("This thread is going to be closed....");
 	}
 }
