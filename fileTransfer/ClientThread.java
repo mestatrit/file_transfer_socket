@@ -58,6 +58,7 @@ public class ClientThread extends Thread
 			try 
 			{
 				skt = serverSocket.accept();
+				System.out.println("Connected...");
 				ConnectedClient cc = new ConnectedClient(skt);
 				cc.start();
 				connectedUsers.put(cc,skt);

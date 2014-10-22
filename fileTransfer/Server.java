@@ -20,7 +20,7 @@ public class Server
 	private int serverPORT = 5003;
 	private int backlogLength = 10;
 	
-	protected HashMap<ServerThread, Socket> connectedUsers = new HashMap<ServerThread, Socket> ();
+	protected static HashMap<ServerThread, Socket> connectedUsers = new HashMap<ServerThread, Socket> ();
 	protected int index = -1;
 	protected int recheckinterval = 15;
 	
@@ -53,8 +53,7 @@ public class Server
 					connectedUsers.remove(st);
 				}
 			}
-		}
-		
+		}	
 	}
 	
 	public static void main(String[] args)

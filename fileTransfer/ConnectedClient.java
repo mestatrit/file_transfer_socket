@@ -2,13 +2,11 @@ package fileTransfer;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.Socket;
 
 public class ConnectedClient extends Thread 
@@ -61,7 +59,7 @@ public class ConnectedClient extends Thread
 			byte[] buffer = new byte[MAX];
 			BufferedInputStream bis = new BufferedInputStream(new FileInputStream(file));
 			long size = file.length();
-			int packets = (int)Math.ceil(size/MAX);
+			int packets = (int)Math.ceil((float)size/(float)MAX);
 			bw.writeInt(packets);
 			bw.flush();
 			int i = 0;
@@ -76,12 +74,17 @@ public class ConnectedClient extends Thread
 				i ++;
 			}
 			
+			System.out.println("Writing...");
+			
 			bis.read(buffer);
 			bw.write(buffer);
 			bw.flush();
 			int length = (int)size - (MAX*(packets-1));
 			bw.writeInt(length);
 			bw.flush();
+			
+			String msg = br.readUTF();
+			System.out.println("Message is : " + msg);
 			
 			bis.close();
 			terminate();

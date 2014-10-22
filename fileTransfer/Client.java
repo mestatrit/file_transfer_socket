@@ -562,10 +562,11 @@ public class Client
 					return ;
 				}
 				
-				int transmissions = clientSocketReader.read();
+				int transmissions = clientSocketReader.readInt();
 				
 				int i = 0;
 				byte buffer[] = new byte[MAXSIZE];
+				System.out.println("Hello!!! happy reading");
 				while(i < transmissions)
 				{
 					clientSocketReader.read(buffer);
@@ -575,6 +576,8 @@ public class Client
 					myFileWriter.flush();
 					i ++;
 				}
+				clientSocketWriter.writeUTF("DONE");
+				clientSocketWriter.flush();
 				myFileWriter.close();
 				clientSocketReader.close();
 				clientSocketWriter.close();

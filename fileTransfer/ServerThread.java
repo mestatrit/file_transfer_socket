@@ -7,6 +7,7 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 
 import database.Database_server;
 
@@ -163,8 +164,15 @@ public class ServerThread extends Thread
 					String msg = command.get("arg0");
 				}
 				else if(cmd.equals("USERS"))
-				{//TODO
-					 
+				{
+					 ArrayList<HashMap<String, String>> result = new ArrayList<HashMap<String,String>> (); 
+					 for(Map.Entry<ServerThread, Socket> entry: Server.connectedUsers.entrySet())
+					 {
+						 HashMap<String, String> hm = new HashMap<String, String> ();
+						 hm.put("response", entry.getValue().getInetAddress().toString());
+						 result.add(hm);
+					 }
+					 serversockwriterForObjects.writeObject(result);
 				}
 				else if(cmd.equals("LIST"))
 				{
