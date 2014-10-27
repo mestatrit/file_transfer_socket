@@ -93,16 +93,25 @@ public class ServerThread extends Thread
 				
 				if(cmd.equals("ADD"))
 				{
+					System.out.println("addition called!!!!");
+					
 					String filepath = command.get("arg0");
 					String filename = command.get("arg1");
 					int size = Integer.parseInt(command.get("arg2"));
 					String type = command.get("arg3");
-					
+
+					ArrayList<HashMap<String, String>> res = new ArrayList<HashMap<String,String>> ();
+					HashMap<String, String> hm = new HashMap<String, String> ();
+
 					ArrayList<HashMap<String, String>> selectionList = Database_server.selectFromTable_byUserAndFile(clientIP, filepath);
-					if(selectionList.isEmpty())
+					if(!selectionList.isEmpty())
 					{
-						serversockwriterForObjects.writeUTF("file already hashed at server side by this user!!!");
+						hm.put("response", "NO");
+						res.add(hm);
+						serversockwriterForObjects.writeObject(res);
 						serversockwriterForObjects.flush();
+						//serversockwriterForObjects.writeUTF("file already hashed at server side by this user!!!");
+						//serversockwriterForObjects.flush();
 						continue;
 					}
 					
@@ -110,21 +119,27 @@ public class ServerThread extends Thread
 					if(result == 0)
 					{
 						System.out.println("hello1");
-						serversockwriterForObjects.writeUTF("addition done");
-						serversockwriterForObjects.flush();
+						hm.put("response", "addition done");
+						//serversockwriterForObjects.writeUTF("addition done");
+						//serversockwriterForObjects.flush();
 					}
 					else if(result == 2)
 					{
 						System.out.println("hello2");
-						serversockwriterForObjects.writeUTF("addition was done but the stmt/conn could not be closed");
-						serversockwriterForObjects.flush();
+						hm.put("response", "NO");
+						//serversockwriterForObjects.writeUTF("addition was done but the stmt/conn could not be closed");
+						//serversockwriterForObjects.flush();
 					}
 					else
 					{
 						System.out.println("hello3");
-						serversockwriterForObjects.writeUTF("addition could not be done");
-						serversockwriterForObjects.flush();
+						hm.put("response", "NO");
+						//serversockwriterForObjects.writeUTF("addition could not be done");
+						//serversockwriterForObjects.flush();
 					}
+					res.add(hm);
+					serversockwriterForObjects.writeObject(res);
+					serversockwriterForObjects.flush();
 				}
 				else if(cmd.equals("SEARCH"))
 				{
@@ -139,22 +154,31 @@ public class ServerThread extends Thread
 					String filepath_toBeDeleted = command.get("arg0");
 					
 					int result = Database_server.deleteFromTable_byUserAndFile(clientIP, filepath_toBeDeleted);
+					ArrayList<HashMap<String, String>> res = new ArrayList<HashMap<String,String>> ();
+					HashMap<String, String> hm = new HashMap<String, String> ();
+
 					System.out.println("deleting");
 					if(result == 0)
 					{
-						serversockwriterForObjects.writeUTF("deletion done");
-						serversockwriterForObjects.flush();
+						hm.put("response", "deletion done");
+						//serversockwriterForObjects.writeUTF("deletion done");
+						//serversockwriterForObjects.flush();
 					}
 					else if(result == 2)
 					{
-						serversockwriterForObjects.writeUTF("deletion was done but stmt/conn could not be closed");
-						serversockwriterForObjects.flush();
+						hm.put("response", "NO");
+						//serversockwriterForObjects.writeUTF("deletion was done but stmt/conn could not be closed");
+						//serversockwriterForObjects.flush();
 					}
 					else
 					{
-						serversockwriterForObjects.writeUTF("could not delete");
-						serversockwriterForObjects.flush();
+						hm.put("response", "NO");
+						//serversockwriterForObjects.writeUTF("could not delete");
+						//serversockwriterForObjects.flush();
 					}
+					res.add(hm);
+					serversockwriterForObjects.writeObject(res);
+					serversockwriterForObjects.flush();
 				}
 				else if(cmd.equals("USERS"))
 				{

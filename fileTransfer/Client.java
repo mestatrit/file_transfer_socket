@@ -423,10 +423,10 @@ public class Client
 				else
 				{
 					System.out.println("Results for your search query are: ");
-					System.out.println("IP address    File Name    Size    Type  ");
+					System.out.println("IP address    File Name		File Path    Size    Type  ");
 					for(HashMap<String, String> hm:result)
 					{
-						System.out.println(hm.get("IPaddr") + " | " + hm.get("filename") + " | " + hm.get("size") + " | " + hm.get("type"));
+						System.out.println(hm.get("IPaddr") + " | " + hm.get("filename") + " | " + hm.get("filepath") + " | " + hm.get("size") + " | " + hm.get("type"));
 					}		
 					return ;
 				}

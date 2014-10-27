@@ -2,21 +2,21 @@ package database;
 
 public class Query 
 {
-	protected static String DBname = "CNS";
+	protected static String DBname = "CNS.db";
 	
 	protected static String TableName_client = "CLIENT_LOG";
 	protected static String createDB_client = "CREATE DATABASE " + DBname + ";";
-	protected static String createTable_client = 	"CREATE TABLE " + TableName_client +
-		            								" (id INTEGER not NULL AUTO_INCREMENT," +
+	protected static String createTable_client = 	"CREATE TABLE if not exists " + TableName_client +
+		            								" (id INTEGER not NULL," +
 		            								" filepath TEXT," + 
 		            								" filename TEXT," + 
 		            								" size INTEGER," + 
 		            								" type TEXT," + 
-		            								" PRIMARY KEY ( id ));"; 
+		            								" PRIMARY KEY ( id ))"; 
 	
 	protected static String TableName_server = "SERVER_LOG";
-	protected static String createTable_server = 	"CREATE TABLE " + TableName_server +
-													" (id INTEGER not NULL AUTO_INCREMENT," +
+	protected static String createTable_server = 	"CREATE TABLE if not exists " + TableName_server +
+													" (id INTEGER not NULL," +
 													" IPaddr TEXT not NULL," + 
 													" filepath TEXT," + 
 													" filename TEXT," + 

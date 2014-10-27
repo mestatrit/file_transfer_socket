@@ -8,114 +8,82 @@ import database.Query;
 
 public class Database_client 
 {
-	private static String JDBC_DRIVER = "com.mysql.jdbc.Driver";
-	private static String DB_URL_BASE = "jdbc:mysql://localhost/";
+	private static String JDBC_DRIVER = "org.sqlite.JDBC";
+	private static String DB_URL_BASE = "jdbc:sqlite:";
 	private static String DB_URL = DB_URL_BASE + Query.DBname;
-	
-	private static String USER = "root";
-	private static String PASS = "";
 	
 	public static int createDB()
 	{
-		   Connection conn = null;
-		   Statement stmt = null;
-		   
-		   int result = 1;
+	   Connection conn = null;
+	   Statement stmt = null;
+	   
+	   int result = 1;
+	   try
+	   {
+		   Class.forName(JDBC_DRIVER);
+		   conn = DriverManager.getConnection(DB_URL);
+		   result = 0;
+	   }
+	   catch(SQLException se)
+	   {
+		   if(se.getErrorCode() == 1007)
+		   {
+			   System.out.println("Database already exists!!!");
+		   }
+		   else
+		   {
+			   se.printStackTrace();
+		   }
+	   }
+	   catch(Exception e)
+	   {	
+	      	e.printStackTrace();
+	   }
+	   finally
+	   {
 		   try
 		   {
-			   //STEP 2: Register JDBC driver
-			   Class.forName(JDBC_DRIVER);
-
-			   //STEP 3: Open a connection
-			   //System.out.println("Connecting to database...");
-			   conn = DriverManager.getConnection(DB_URL_BASE, USER, PASS);
-
-			   //STEP 4: Execute a query
-			   //System.out.println("Creating database...");
-			   stmt = conn.createStatement();
-  
-			   String sql = Query.createDB_client;
-			   stmt.executeUpdate(sql);
-			   
-			   result = 0;
-			   //System.out.println("Database created successfully...");
-			   //Database.DB_URL = DB_URL_BASE + Query.DBname;
+			   if(stmt!=null)
+				   stmt.close();
+		   }
+		   catch(SQLException se2)
+		   {
+			   result = 2;
+		   }
+		   try
+		   {
+			   if(conn!=null)
+				   conn.close();
 		   }
 		   catch(SQLException se)
 		   {
-			   //Handle errors for JDBC
-			   if(se.getErrorCode() == 1007)
-			   {
-				   System.out.println("Database already exists!!!");
-			   }
-			   else
-			   {
-				   se.printStackTrace();
-			   }
+			   se.printStackTrace();
+			   result = 2;
 		   }
-		   catch(Exception e)
-		   {	
-			   	//Handle errors for Class.forName
-		      	e.printStackTrace();
-		   }
-		   finally
-		   {
-			   //finally block used to close resources
-			   try
-			   {
-				   if(stmt!=null)
-					   stmt.close();
-			   }
-			   catch(SQLException se2)
-			   {
-				   result = 2;
-			   }// nothing we can do
-			   try
-			   {
-				   if(conn!=null)
-					   conn.close();
-			   }
-			   catch(SQLException se)
-			   {
-				   se.printStackTrace();
-				   result = 2;
-			   }//end finally try
-		   }//end try
-		   //System.out.println("Goodbye!");
-		   
+	   }
+	   System.out.println("creation db done");
 		   return result;
-	}//end createDB
+	}
 	
 	public static int createTable() 
 	{
 		Connection conn = null;
 		Statement stmt = null;
 		
+		System.out.println("creating table ");
 		int result = 1;
 		try
 		{
-		    //STEP 2: Register JDBC driver
 		    Class.forName(JDBC_DRIVER);
-
-		    //STEP 3: Open a connection
-		   // System.out.println("Connecting to a selected database..." + DB_URL);
-		    conn = DriverManager.getConnection(DB_URL, USER, PASS);
-		    //System.out.println("Connected database successfully...");
-		    
-		    //STEP 4: Execute a query
-		    //System.out.println("Creating table in given database...");
+		    conn = DriverManager.getConnection(DB_URL);
 		    stmt = conn.createStatement();
 		    
 		    String sql = Query.createTable_client; 
-
 		    stmt.executeUpdate(sql);
-		    
 		    result = 0;
-		    //System.out.println("Created table in given database...");
 		}
 		catch(SQLException se)
 		{
-		    //Handle errors for JDBC
 			if(se.getErrorCode() == 1050)
 			{
 				System.out.println("Table already exixts!!!");
@@ -127,12 +95,10 @@ public class Database_client
 		}
 		catch(Exception e)
 		{
-		    //Handle errors for Class.forName
 		    e.printStackTrace();
 		}
 		finally
 		{
-			//finally block used to close resources
 		    try
 		    {
 		    	if(stmt!=null)
@@ -141,7 +107,7 @@ public class Database_client
 		    catch(SQLException se)
 		    {
 		    	result = 2;
-		    }// do nothing
+		    }
 		    try
 		    {
 		    	if(conn!=null)
@@ -151,13 +117,10 @@ public class Database_client
 		    {
 		    	se.printStackTrace();
 		    	result = 2;
-		    }//end finally try
-		}//end try
-		//System.out.println("Goodbye!");
-		
+		    }
+		}
 		return result;
-		
-	}//end createTable
+	}
 	
 	public static int insertIntoTable(String filepath, String filename, Integer size, String type) 
 	{
@@ -167,39 +130,24 @@ public class Database_client
 		int result = 1;
 		try
 		{
-			//STEP 2: Register JDBC driver
 			Class.forName(JDBC_DRIVER);
-		
-			//STEP 3: Open a connection
-			//System.out.println("Connecting to a selected database...");
-			conn = DriverManager.getConnection(DB_URL, USER, PASS);
-			//System.out.println("Connected database successfully...");
-			
-			//STEP 4: Execute a query
-			//System.out.println("Inserting records into the table...");
+			conn = DriverManager.getConnection(DB_URL);
 			stmt = conn.createStatement();
 						
 			String sql = Query.insertIntoTable_client(filepath, filename, size, type);
-			//System.out.println("Query is : " + sql);
 			stmt.executeUpdate(sql);
-			
 			result = 0; 
-			
-			//System.out.println("Inserted records into the table...");
 		}
 		catch(SQLException se)
 		{
-			//Handle errors for JDBC
 			se.printStackTrace();
 		}
 		catch(Exception e)
 		{
-			//Handle errors for Class.forName
 			e.printStackTrace();
 		}
 		finally
 		{
-			//finally block used to close resources
 			try
 			{
 				if(stmt!=null)
@@ -208,7 +156,7 @@ public class Database_client
 			catch(SQLException se)
 			{
 				result = 2;
-			}// do nothing
+			}
 			try
 			{
 				if(conn!=null)
@@ -218,11 +166,10 @@ public class Database_client
 			{
 				se.printStackTrace();
 				result = 2;
-			}//end finally try
-	    }//end try
-		//System.out.println("Goodbye!");
+			}
+	    }
 		return result;
-	}//end insertIntoTable
+	}
 	
 	public static int deleteFromTable(Integer identity) 
 	{
@@ -232,37 +179,23 @@ public class Database_client
 		int result = 1;
 		try
 		{
-			//STEP 2: Register JDBC driver
 			Class.forName(JDBC_DRIVER);
-		
-			//STEP 3: Open a connection
-			//System.out.println("Connecting to a selected database...");
-			conn = DriverManager.getConnection(DB_URL, USER, PASS);
-			//System.out.println("Connected database successfully...");
-			
-			//STEP 4: Execute a query
-			//System.out.println("Inserting records into the table...");
+			conn = DriverManager.getConnection(DB_URL);
 			stmt = conn.createStatement();
-			
 			String sql = Query.deleteFromTable_client(identity);
 			stmt.executeUpdate(sql);
-			
 			result = 0;			
-			//System.out.println("Inserted records into the table...");
 		}
 		catch(SQLException se)
 		{
-			//Handle errors for JDBC
 			se.printStackTrace();
 		}
 		catch(Exception e)
 		{
-			//Handle errors for Class.forName
 			e.printStackTrace();
 		}
 		finally
 		{
-			//finally block used to close resources
 			try
 			{
 				if(stmt!=null)
@@ -271,7 +204,7 @@ public class Database_client
 			catch(SQLException se)
 			{
 				result = 2;
-			}// do nothing
+			}
 			try
 			{
 				if(conn!=null)
@@ -281,11 +214,10 @@ public class Database_client
 			{
 				se.printStackTrace();
 				result = 2;
-			}//end finally try
-	    }//end try
-		//System.out.println("Goodbye!");
+			}
+	    }
 		return result;
-	}//end deleteFromTable
+	}
 	
 	public static ArrayList<HashMap<String, String>> selectFromTable(String file) 
 	{
@@ -293,26 +225,14 @@ public class Database_client
 		Statement stmt = null;
 		try
 		{
-			//STEP 2: Register JDBC driver
 			Class.forName(JDBC_DRIVER);
-			
-			//STEP 3: Open a connection
-		    //System.out.println("Connecting to a selected database...");
-		    conn = DriverManager.getConnection(DB_URL, USER, PASS);
-		    //System.out.println("Connected database successfully...");
-		      
-		    //STEP 4: Execute a query
-		    //System.out.println("Creating statement...");
+		    conn = DriverManager.getConnection(DB_URL);
 		    stmt = conn.createStatement();
-
 		    String sql = Query.selectFromTable_client_byFile(file);
-		    //System.out.println("Query: " + sql);
 		    ResultSet rs = stmt.executeQuery(sql);
-		    //STEP 5: Extract data from result set
 		    ArrayList<HashMap<String, String>> selectionList = new ArrayList<HashMap<String, String>> ();
 		    while(rs.next())
 		    {
-		    	//Retrieve by column name
 		    	HashMap<String, String> hm = new HashMap<String, String> ();
 		    	hm.put("identity", Integer.toString(rs.getInt("id")));
 		    	hm.put("filepath", rs.getString("filepath"));
@@ -326,17 +246,14 @@ public class Database_client
 		}
 		catch(SQLException se)
 		{
-			//Handle errors for JDBC
 			se.printStackTrace();
 		}
 		catch(Exception e)
 		{
-			//Handle errors for Class.forName
 			e.printStackTrace();
 		}
 		finally
 		{
-			//finally block used to close resources
 			try
 			{
 				if(stmt!=null)
@@ -345,7 +262,7 @@ public class Database_client
 			catch(SQLException se)
 			{
 		    
-			}// do nothing
+			}
 		    try
 		    {
 		    	if(conn!=null)
@@ -354,10 +271,8 @@ public class Database_client
 		    catch(SQLException se)
 		    {
 		    	se.printStackTrace();
-		    }//end finally try
-		}//end try
-		//System.out.println("Goodbye!");
+		    }
+		}
 		return null;
-	}//end selectFromTable
-	
+	}
 }
