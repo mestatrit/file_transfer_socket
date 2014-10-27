@@ -154,7 +154,7 @@ public class Client
 			while(true)
 			{
 				System.out.println("Enter your choices:\n");
-				System.out.println("1. Search for a file\n2. Share a file\n3. Send a message\n4. Get all online users\n5. Get a user's file list\n6. Download a file\n7. Exit");
+				System.out.println("1. Search for a file\n2. Share a file\n3. Unshare a file\n4. Get all online users\n5. Get a user's file list\n6. Download a file\n7. Exit");
 				
 				int choice = br.read() - '0';
 				br.read();
@@ -165,7 +165,7 @@ public class Client
 							break;
 					case 2: shareFile();
 							break;
-					case 3: serverBroadcastMsg();
+					case 3: unshare();
 							break;
 					case 4:	getAllUsers();
 							break;
@@ -245,15 +245,25 @@ public class Client
 		issueCommandToServer(command);
 	}
 
-	private void serverBroadcastMsg() throws IOException 
+	private void unshare() throws IOException 
 	{
 		// send the command to the server to broadcast the message
-		String msg = br.readLine();
-		//String cmd = "BROADCAST " + msg;
+		System.out.println("Enter the file (whole path), which you want to unshare");
+		String file = br.readLine();
+		ArrayList<HashMap<String, String>> hm = Database_client.selectFromTable(file);
+		if(hm.isEmpty())
+		{
+			System.out.println("Sorry, the file is not currently hashed...");
+			return ;
+		}
+		int id = Integer.parseInt(hm.get(0).get("identity"));
+		System.out.println("Deleting from local database...");
+		Database_client.deleteFromTable(id);
 		HashMap<String, String> command = new HashMap<String, String> ();
-		command.put("command", "BROADCAST");
-		command.put("arg0", msg);
+		command.put("command", "DELETE");
+		command.put("arg0", file);
 		
+		System.out.println("Deleting from server database...");
 		issueCommandToServer(command);
 	}
 
@@ -373,10 +383,9 @@ public class Client
 		 *	1. ADD - add a new file to the server log USAGE: ADD <filepath> <filename> <size> <type>
 		 *	2. SEARCH - search for a file in server log USAGE: SEARCH <filename>
 		 *	3. DELETE - delete a file from server log USAGE: DELETE <filename>
-		 *	4. BROADCAST - broadcast a message to all users 
-		 *	5. USERS - get all the currently online users 
-		 *	6. LIST - get the file list of a client with a particular ip USAGE: LIST <IP address>
-		 *	7. GETFILE - receive the actual file from the user USAGE : GETFILE <IP address> <full filename>
+		 *	4. USERS - get all the currently online users 
+		 *	5. LIST - get the file list of a client with a particular ip USAGE: LIST <IP address>
+		 *	6. GETFILE - receive the actual file from the user USAGE : GETFILE <IP address> <full filename>
 		 * */
 		
 		String keyword = command.get("command");

@@ -64,13 +64,10 @@ public class ServerThread extends Thread
 		 *	3. DELETE - delete a file from server log USAGE: DELETE <file name>
 		 *		if deleted successfully, return "deletion done"
 		 *
-		 *	4. BROADCAST - broadcast a message to all users
-		 *		if broadcast done successfully, return "broadcast done"
-		 * 
-		 *	5. USERS - get all the currently online users 
+		 *	4. USERS - get all the currently online users 
 		 *		return arraylist of online users
 		 *
-		 *	6. LIST - get the file list of a client with a particular ip USAGE: LIST <IP address>
+		 *	5. LIST - get the file list of a client with a particular ip USAGE: LIST <IP address>
 		 *		return arraylist of hasmaps mapping info:		<filename>		<filesize>		<filetype>
 		 *	
 		 *	
@@ -158,10 +155,6 @@ public class ServerThread extends Thread
 						serversockwriterForObjects.writeUTF("could not delete");
 						serversockwriterForObjects.flush();
 					}
-				}
-				else if(cmd.equals("BROADCAST"))
-				{//TODO
-					String msg = command.get("arg0");
 				}
 				else if(cmd.equals("USERS"))
 				{
