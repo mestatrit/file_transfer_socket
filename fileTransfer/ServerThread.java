@@ -16,7 +16,7 @@ public class ServerThread extends Thread
 	private Socket socket;
 	private static int id = 0;
 	private int thisID;
-	private String myIP, clientIP;
+	private String clientIP;
 	private ObjectInputStream serversockreaderForObjects;
 	private ObjectOutputStream serversockwriterForObjects;
 	private long time; 
@@ -34,7 +34,7 @@ public class ServerThread extends Thread
 		id ++;
 		
 		this.socket = socket;
-		this.myIP = socket.getLocalAddress().toString();
+		socket.getLocalAddress().toString();
 		this.clientIP = socket.getInetAddress().toString();
 		
 		try 
