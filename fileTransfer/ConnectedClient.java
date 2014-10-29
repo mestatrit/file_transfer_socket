@@ -56,7 +56,6 @@ public class ConnectedClient extends Thread
 			}
 			long size = file.length();
 			int packets = (int)Math.ceil((float)size/(float)MAX);
-			System.out.println("Packets: " + packets);
 			bw.writeInt(packets);
 			bw.flush();
 			RandomAccessFile raf = new RandomAccessFile(file, "rw");
@@ -65,26 +64,19 @@ public class ConnectedClient extends Thread
 			{
 				int packet = br.readInt();
 				int len = (int) Math.min(MAX, size-(packet*MAX));
-				System.out.println("packet received: " + packet + " length to be read: " + len + "total packets: " + packets);
+				System.out.println("packet request received: " + packet + " length to be read: " + len + "total packets: " + packets);
 				byte[] buffer = new byte[len];
 				raf.seek(packet*MAX);
 				raf.read(buffer);
-				System.out.println("Now length is being written..." + len);
 				bw.writeInt(len);
 				bw.flush();
-				System.out.println("Length written: " + len);
 				bw.write(buffer);
 				bw.flush();
 				i ++;
 			}
-			
-			System.out.println("Writing...");
-			
+						
 			String msg = br.readUTF();
-			System.out.println("Message is : " + msg);
-			
-			//fis.close();
-			//fc.close();
+			System.out.println("Message received from client: " + msg);
 			raf.close();
 			terminate();
 			socket.close();
