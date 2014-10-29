@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.RandomAccessFile;
 import java.net.Socket;
 import java.nio.file.Files;
 import java.util.ArrayList;
@@ -547,7 +548,7 @@ public class Client
 					myFile.createNewFile();
 				}
 				
-				BufferedOutputStream myFileWriter = new BufferedOutputStream(new FileOutputStream(myFile));
+				//BufferedOutputStream myFileWriter = new BufferedOutputStream(new FileOutputStream(myFile));
 
 				clientSocket = new Socket(clientIP, clientPORT);
 				DataInputStream clientSocketReader = new DataInputStream(new BufferedInputStream(clientSocket.getInputStream()));
@@ -560,11 +561,11 @@ public class Client
 				clientSocketWriter.writeUTF(peerFilePath);
 				clientSocketWriter.flush();
 				
-				int flag = clientSocketReader.read();
+				int flag = clientSocketReader.readInt();
 				if(flag == 1)
 				{
 					System.out.println("Some error occured!!!!");
-					myFileWriter.close();
+					//myFileWriter.close();
 					myFile.delete();
 					clientSocketReader.close();
 					clientSocketWriter.close();
@@ -574,26 +575,29 @@ public class Client
 				
 				int transmissions = clientSocketReader.readInt();
 				
-				int i = 0;
-				byte buffer[] = new byte[MAXSIZE];
+				int i = transmissions-1;
+				RandomAccessFile raf = new RandomAccessFile(myFile, "rw");
 				System.out.println("Hello!!! happy reading");
-				while(i < transmissions)
+				while(i >= 0)// transmissions)
 				{
+					System.out.println("Reuesting packet: " + i);
 					clientSocketWriter.writeInt(i);
 					clientSocketWriter.flush();
 					System.out.println("hello1");
-					clientSocketReader.read(buffer);
-					System.out.println("hello2");
 					int length = clientSocketReader.readInt();
 					System.out.println("Received " + i);
-					myFileWriter.write(buffer, 0, length);
-					myFileWriter.flush();
+					byte buffer[] = new byte[MAXSIZE];
+					clientSocketReader.read(buffer);
+					System.out.println("hello2");
+					raf.seek(i*MAXSIZE);
+					raf.write(buffer, 0, length);
 					System.out.println("hello3");
-					i ++;
+					i --;
 				}
 				clientSocketWriter.writeUTF("DONE");
 				clientSocketWriter.flush();
-				myFileWriter.close();
+				//myFileWriter.close();
+				raf.close();
 				clientSocketReader.close();
 				clientSocketWriter.close();
 				clientSocket.close();

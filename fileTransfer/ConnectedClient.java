@@ -5,11 +5,9 @@ import java.io.BufferedOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.Socket;
-import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
+import java.io.RandomAccessFile;
 
 public class ConnectedClient extends Thread 
 {
@@ -47,34 +45,35 @@ public class ConnectedClient extends Thread
 			File file = new File(path);
 			if(!file.exists() || !file.isFile())
 			{
-				bw.write(1);
+				bw.writeInt(1);
 				bw.flush();
 				return ;
 			}
 			else
 			{
-				bw.write(0);
+				bw.writeInt(0);
 				bw.flush();
 			}
-			FileInputStream fis = new FileInputStream(path);
-			FileChannel fc = fis.getChannel();
 			long size = file.length();
 			int packets = (int)Math.ceil((float)size/(float)MAX);
 			System.out.println("Packets: " + packets);
 			bw.writeInt(packets);
 			bw.flush();
+			RandomAccessFile raf = new RandomAccessFile(file, "rw");
 			int i = 0;
 			while(i < packets)
 			{
 				int packet = br.readInt();
-				System.out.println("packet received: " + packet + " byte buffer length: " + (int) Math.min(MAX, size-(packet*MAX)) + "total packets: " + packets);
-				ByteBuffer buffer = ByteBuffer.allocate((int) Math.min(MAX, size-(packet*MAX)));
-				fc.read(buffer, packet*MAX);
-				System.out.println("Length written: " + buffer.capacity());
-				byte[] buf = buffer.array();
-				bw.write(buf);
+				int len = (int) Math.min(MAX, size-(packet*MAX));
+				System.out.println("packet received: " + packet + " length to be read: " + len + "total packets: " + packets);
+				byte[] buffer = new byte[len];
+				raf.seek(packet*MAX);
+				raf.read(buffer);
+				System.out.println("Now length is being written..." + len);
+				bw.writeInt(len);
 				bw.flush();
-				bw.writeInt((int) Math.min(MAX, size-(packet*MAX)));
+				System.out.println("Length written: " + len);
+				bw.write(buffer);
 				bw.flush();
 				i ++;
 			}
@@ -84,8 +83,9 @@ public class ConnectedClient extends Thread
 			String msg = br.readUTF();
 			System.out.println("Message is : " + msg);
 			
-			fis.close();
-			fc.close();
+			//fis.close();
+			//fc.close();
+			raf.close();
 			terminate();
 			socket.close();
 		}
