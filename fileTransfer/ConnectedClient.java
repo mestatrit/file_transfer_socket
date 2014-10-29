@@ -8,6 +8,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 
 public class ConnectedClient extends Thread 
 {
@@ -24,7 +26,6 @@ public class ConnectedClient extends Thread
 		thisID = id;
 		id ++;
 		System.out.println("Created a thread with id: " + thisID);
-		MAX = 1024;
 		try 
 		{
 			br = new DataInputStream(new BufferedInputStream(socket.getInputStream()));
@@ -41,8 +42,7 @@ public class ConnectedClient extends Thread
 	{
 		try 
 		{
-			bw.writeInt(MAX);
-			bw.flush();
+			MAX = br.readInt();
 			path = br.readUTF();
 			File file = new File(path);
 			if(!file.exists() || !file.isFile())
@@ -56,37 +56,36 @@ public class ConnectedClient extends Thread
 				bw.write(0);
 				bw.flush();
 			}
-			byte[] buffer = new byte[MAX];
-			BufferedInputStream bis = new BufferedInputStream(new FileInputStream(file));
+			FileInputStream fis = new FileInputStream(path);
+			FileChannel fc = fis.getChannel();
 			long size = file.length();
 			int packets = (int)Math.ceil((float)size/(float)MAX);
+			System.out.println("Packets: " + packets);
 			bw.writeInt(packets);
 			bw.flush();
 			int i = 0;
-			while(i < packets-1)
+			while(i < packets)
 			{
-				bis.read(buffer);
-				System.out.println("Length written: " + buffer.length);
-				bw.write(buffer);
+				int packet = br.readInt();
+				System.out.println("packet received: " + packet + " byte buffer length: " + (int) Math.min(MAX, size-(packet*MAX)) + "total packets: " + packets);
+				ByteBuffer buffer = ByteBuffer.allocate((int) Math.min(MAX, size-(packet*MAX)));
+				fc.read(buffer, packet*MAX);
+				System.out.println("Length written: " + buffer.capacity());
+				byte[] buf = buffer.array();
+				bw.write(buf);
 				bw.flush();
-				bw.writeInt(MAX);
+				bw.writeInt((int) Math.min(MAX, size-(packet*MAX)));
 				bw.flush();
 				i ++;
 			}
 			
 			System.out.println("Writing...");
 			
-			bis.read(buffer);
-			bw.write(buffer);
-			bw.flush();
-			int length = (int)size - (MAX*(packets-1));
-			bw.writeInt(length);
-			bw.flush();
-			
 			String msg = br.readUTF();
 			System.out.println("Message is : " + msg);
 			
-			bis.close();
+			fis.close();
+			fc.close();
 			terminate();
 			socket.close();
 		}

@@ -527,7 +527,7 @@ public class Client
 				/*
 				 *  To get file from the user:
 				 *  1. Create a connection to the user (clientsocket)
-				 *  2. Receive the max size of a packet (MAXSIZE) 
+				 *  2. Send the max size of a packet (MAXSIZE) 
 				 *  3. Send the filename you wish to download
 				 *  4. Receive number of transmissions (packets)
 				 *  5. Open the required file in reading and binary mode
@@ -553,7 +553,10 @@ public class Client
 				DataInputStream clientSocketReader = new DataInputStream(new BufferedInputStream(clientSocket.getInputStream()));
 				DataOutputStream clientSocketWriter = new DataOutputStream(new BufferedOutputStream(clientSocket.getOutputStream()));
 				
-				int MAXSIZE = clientSocketReader.readInt();
+				int MAXSIZE = 4096;
+				clientSocketWriter.writeInt(MAXSIZE);
+				clientSocketWriter.flush();
+				
 				clientSocketWriter.writeUTF(peerFilePath);
 				clientSocketWriter.flush();
 				
@@ -576,11 +579,16 @@ public class Client
 				System.out.println("Hello!!! happy reading");
 				while(i < transmissions)
 				{
+					clientSocketWriter.writeInt(i);
+					clientSocketWriter.flush();
+					System.out.println("hello1");
 					clientSocketReader.read(buffer);
+					System.out.println("hello2");
 					int length = clientSocketReader.readInt();
 					System.out.println("Received " + i);
 					myFileWriter.write(buffer, 0, length);
 					myFileWriter.flush();
+					System.out.println("hello3");
 					i ++;
 				}
 				clientSocketWriter.writeUTF("DONE");
