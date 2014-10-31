@@ -59,8 +59,8 @@ public class ConnectedClient extends Thread
 			bw.writeInt(packets);
 			bw.flush();
 			RandomAccessFile raf = new RandomAccessFile(file, "rw");
-			int i = 0;
-			while(i < packets)
+			int i = 1;
+			while(i != 0)
 			{
 				int packet = br.readInt();
 				int len = (int) Math.min(MAX, size-(packet*MAX));
@@ -72,7 +72,8 @@ public class ConnectedClient extends Thread
 				bw.flush();
 				bw.write(buffer);
 				bw.flush();
-				i ++;
+				i = br.readInt();
+				//i ++;
 			}
 						
 			String msg = br.readUTF();

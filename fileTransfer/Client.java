@@ -6,6 +6,8 @@ import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
@@ -15,9 +17,15 @@ import java.net.Socket;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
+
 
 import org.apache.commons.validator.routines.InetAddressValidator;
 import database.Database_client;
@@ -152,7 +160,7 @@ public class Client
 			while(true)
 			{
 				System.out.println("Enter your choices:\n");
-				System.out.println("1. Search for a file\n2. Share a file\n3. Unshare a file\n4. Get all online users\n5. Get a user's file list\n6. Download a file\n7. Exit");
+				System.out.println("1. Search for a file\n2. Share a file\n3. Unshare a file\n4. Get all online users\n5. Get a user's file list\n6. Download a file\n7. Use tracker to download a file\n8. Exit");
 				
 				int choice = br.read() - '0';
 				br.read();
@@ -171,7 +179,9 @@ public class Client
 							break;	
 					case 6:	downloadFile();
 							break;
-					case 7: exitWithGrace();
+					case 7: useTracker();
+							break;
+					case 8: exitWithGrace();
 							break;
 					default:
 							break;
@@ -181,6 +191,46 @@ public class Client
 		catch (IOException e) 
 		{
 			System.out.println("Sorry, input error!!!");
+			e.printStackTrace();
+		}
+	}
+
+	private void useTracker() 
+	{
+		try 
+		{
+			FileReader fr = new FileReader("tracker.json");
+			JSONParser jsonParser = new JSONParser();
+			JSONObject jsonObject = (JSONObject) jsonParser.parse(fr);
+			
+			JSONArray mapping = (JSONArray) jsonObject.get("mapping");
+			String size = (String) jsonObject.get("size");
+			
+			int len = Integer.parseInt(size);
+			
+			Iterator i = mapping.iterator();
+			ArrayList<HashMap<String, String>> list = new ArrayList<HashMap<String, String>> ();
+			while(i.hasNext())
+			{
+				JSONObject obj = (JSONObject) i.next();
+				System.out.println("IP: " + obj.get("ip") + "\nFilepath is: " + obj.get("filepath") + "\nSize is: " + len);
+				HashMap<String,String> hm = new HashMap<String, String> ();
+				hm.put("ip", (String)obj.get("ip"));
+				hm.put("filepath", (String)obj.get("filepath"));
+				list.add(hm);
+			}
+			
+		}
+		catch (FileNotFoundException e) 
+		{
+			e.printStackTrace();
+		} 
+		catch (IOException e) 
+		{
+			e.printStackTrace();
+		}
+		catch (ParseException e) 
+		{
 			e.printStackTrace();
 		}
 	}
@@ -571,9 +621,9 @@ public class Client
 				
 				int transmissions = clientSocketReader.readInt();
 				
-				int i = transmissions-1;
+				int i = 0;
 				RandomAccessFile raf = new RandomAccessFile(myFile, "rw");
-				while(i >= 0)
+				while(i < transmissions)
 				{
 					System.out.println("Reuesting packet: " + i);
 					clientSocketWriter.writeInt(i);
@@ -584,7 +634,14 @@ public class Client
 					raf.seek(i*MAXSIZE);
 					raf.write(buffer, 0, length);
 					System.out.println("Received " + i);
-					i --;
+					int p = 1;
+					if(i == transmissions-1)
+					{
+						p = 0;
+					}
+					clientSocketWriter.writeInt(p);
+					clientSocketWriter.flush();
+					i ++;
 				}
 				clientSocketWriter.writeUTF("DONE");
 				clientSocketWriter.flush();
