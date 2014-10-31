@@ -37,6 +37,7 @@ public class Client
 	private static ObjectOutputStream serversockwriterForObjects;
 	private static ScheduledExecutorService timerForRechecking;
 	private ClientThread ct;
+	private MultiDownloadThread mdt;
 
 	private static int serverPORT = 5003; // port on which clients connect to server
 	private static int clientPORT = 5002; // port on which client peers connect amongst them
@@ -219,7 +220,11 @@ public class Client
 				hm.put("filepath", (String)obj.get("filepath"));
 				list.add(hm);
 			}
-			
+			String[] splitPeerPath = list.get(0).get("filepath").split("/");
+			String myFileName = splitPeerPath[splitPeerPath.length-1];
+			File myFile = new File(downloadDir + "/" + myFileName);
+			mdt = new MultiDownloadThread(len, list, myFile);
+			mdt.start();
 		}
 		catch (FileNotFoundException e) 
 		{

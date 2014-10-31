@@ -13,12 +13,12 @@ public class MultiDownloadThread extends Thread
 {
 	private int clientPort = 5002;
 	private int size, MAX = 4096; // size of file
-	private ArrayList<HashMap<String, String>> list; // mapping of ip addresses and filepaths on that system
+	private ArrayList<HashMap<String, String>> list = new ArrayList<HashMap<String,String>> (); // mapping of ip addresses and filepaths on that system
 	private File file; // file on my system
 	private ScheduledExecutorService timer;
 	private ArrayList<Integer> listOfPackets = new ArrayList<Integer> (); // stores the packets still needed to be assigned to individual downloading threads (MultiDownload)
-	private ArrayList<MultiDownload> mdThreadsList; // stores the list of active threads downloading parts of file
-	private ArrayList<HashMap<String, String>> nonActiveIP;
+	private ArrayList<MultiDownload> mdThreadsList = new ArrayList<MultiDownload> (); // stores the list of active threads downloading parts of file
+	private ArrayList<HashMap<String, String>> nonActiveIP = new ArrayList<HashMap<String,String>> ();
 	
 	public MultiDownloadThread(int size, ArrayList<HashMap<String, String>> list, File file)
 	{
@@ -37,10 +37,11 @@ public class MultiDownloadThread extends Thread
 				System.out.println("Can't create this file");
 			}
 		}
-		int packets = this.size/MAX;
+		int packets = (int) Math.ceil((float)this.size/(float)MAX);
 		for(int i = 0 ; i < packets ; i ++)
 		{
 			listOfPackets.add(i);
+			System.out.println(i);
 		}
 	}
 	
@@ -61,7 +62,7 @@ public class MultiDownloadThread extends Thread
 						ArrayList<Integer> list = new ArrayList<Integer> ();
 						list.addAll(listOfPackets.subList(0, Math.min(10, listOfPackets.size())));
 						listOfPackets.removeAll(list);
-						MultiDownload md = new MultiDownload(MAX, ip, filepath, socket, list);
+						MultiDownload md = new MultiDownload(MAX, ip, filepath, socket, list, file);
 						md.start();
 						mdThreadsList.add(md);
 					}
@@ -111,11 +112,12 @@ public class MultiDownloadThread extends Thread
 					// add all the other IPs to non active list
 					// break the loop
 					flag = 1;
+					nonActiveIP.add(hm);
 					socket.close();
 					continue;
 				}
 				listOfPackets.removeAll(dist);
-				MultiDownload md = new MultiDownload(MAX, ip, filepath, socket, dist);
+				MultiDownload md = new MultiDownload(MAX, ip, filepath, socket, dist, file);
 				md.start();
 				mdThreadsList.add(md);
 			}
