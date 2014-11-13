@@ -102,11 +102,12 @@ public class ServerThread extends Thread
 					String filename = command.get("arg1");
 					int size = Integer.parseInt(command.get("arg2"));
 					String type = command.get("arg3");
+					String username = command.get("arg4");
 
 					ArrayList<HashMap<String, String>> res = new ArrayList<HashMap<String,String>> ();
 					HashMap<String, String> hm = new HashMap<String, String> ();
 
-					ArrayList<HashMap<String, String>> selectionList = Database_server.selectFromTable_byUserAndFile(clientIP, filepath);
+					ArrayList<HashMap<String, String>> selectionList = Database_server.selectFromTable_byUserAndFile(username, filepath);
 					if(!selectionList.isEmpty())
 					{
 						hm.put("response", "NO");
@@ -118,7 +119,7 @@ public class ServerThread extends Thread
 						continue;
 					}
 					
-					int result = Database_server.insertIntoTable(clientIP, filepath, filename, size, type);
+					int result = Database_server.insertIntoTable(username, filepath, filename, size, type);
 					if(result == 0)
 					{
 						System.out.println("hello1");
@@ -155,8 +156,9 @@ public class ServerThread extends Thread
 				else if(cmd.equals("DELETE"))
 				{
 					String filepath_toBeDeleted = command.get("arg0");
+					String username = command.get("arg1");
 					
-					int result = Database_server.deleteFromTable_byUserAndFile(clientIP, filepath_toBeDeleted);
+					int result = Database_server.deleteFromTable_byUserAndFile(username, filepath_toBeDeleted);
 					ArrayList<HashMap<String, String>> res = new ArrayList<HashMap<String,String>> ();
 					HashMap<String, String> hm = new HashMap<String, String> ();
 
@@ -196,9 +198,9 @@ public class ServerThread extends Thread
 				}
 				else if(cmd.equals("LIST"))
 				{
-					String IPaddr = command.get("arg0");
-					System.out.println("IP address: " + IPaddr);
-					ArrayList<HashMap<String, String>> result = Database_server.selectFromTable_byUser(IPaddr);
+					String username = command.get("arg0");
+					System.out.println("Username: " + username);
+					ArrayList<HashMap<String, String>> result = Database_server.selectFromTable_byUser(username);
 					serversockwriterForObjects.writeObject(result);
 				}
 				else if(cmd.equals("LOGIN"))
@@ -212,6 +214,10 @@ public class ServerThread extends Thread
 						HashMap<String, String> hm = new HashMap<String, String>();
 						hm.put("response", "SUCCESS");
 						list.add(hm);
+						if(!clientIP.equals(Database_server.getIP(username)))
+						{
+							Database_server.updateIP(username, clientIP);
+						}
 					}
 					else
 					{

@@ -38,6 +38,8 @@ public class Client
 	private static ScheduledExecutorService timerForRechecking;
 	private ClientThread ct;
 	private MultiDownloadThread mdt;
+	
+	private String username;
 
 	private static int serverPORT = 5003; // port on which clients connect to server
 	private static int clientPORT = 5002; // port on which client peers connect amongst them
@@ -82,6 +84,7 @@ public class Client
 					HashMap<String, String> command = new HashMap<String, String> ();
 					command.put("command", "DELETE");
 					command.put("arg0", file.getAbsolutePath());
+					command.put("arg1", username);
 					
 					issueCommandToServer(command);
 				}
@@ -117,7 +120,7 @@ public class Client
 				if(!file.exists() || !file.isDirectory())
 				{
 					System.out.println("Please enter a valid download directory.");
-					downloadDir = null;			
+					downloadDir = null;
 					continue ;
 				}
 				connectToServer();
@@ -125,6 +128,7 @@ public class Client
 				
 				System.out.println("Are you a registered user (y/n)...");
 				char ch = (char)br.read();
+				br.readLine();
 				if(ch == 'y' || ch == 'Y')
 				{
 					// yes, he is registered user...
@@ -148,6 +152,7 @@ public class Client
 					if(cmd.get(0).get("response") == "SUCCESS")
 					{
 						System.out.println("Successfully logged in...");
+						this.username = username;
 					}
 				}
 				else if(ch == 'n' || ch == 'N')
@@ -162,7 +167,7 @@ public class Client
 					command.put("command", "REGISTER");
 					command.put("username", uname);
 					command.put("password", pswd);
-					String ip = clientSocket.getLocalAddress().toString();
+					String ip = serverSocket.getLocalAddress().toString();
 					command.put("IPaddr", ip);
 					serversockwriterForObjects.writeObject(command);
 					serversockwriterForObjects.flush();
@@ -175,6 +180,7 @@ public class Client
 					if(cmd.get(0).get("response") == "SUCCESS")
 					{
 						System.out.println("Successfully registered...");
+						this.username = uname;
 					}
 				}
 				else
@@ -197,7 +203,7 @@ public class Client
 
 	private void connectToServer() 
 	{
-		System.out.println("Enter the IP address of the server: \n");
+		System.out.println("Enter the IP address of the server:");
 		try 
 		{
 			String servaddr = br.readLine();
@@ -378,6 +384,7 @@ public class Client
 		HashMap<String, String> command = new HashMap<String, String> ();
 		command.put("command", "DELETE");
 		command.put("arg0", file);
+		command.put("arg1", this.username);
 		
 		System.out.println("Deleting from server database...");
 		issueCommandToServer(command);
@@ -467,6 +474,7 @@ public class Client
 			command.put("arg1", filename);
 			command.put("arg2", size.toString());
 			command.put("arg3", type);
+			command.put("arg4", this.username);
 			
 			issueCommandToServer(command);
 		}

@@ -124,7 +124,7 @@ public class Database_server
 		return result;
 	}
 	
-	public static int insertIntoTable(String IPaddr, String filepath, String filename, Integer size, String type) 
+	public static int insertIntoTable(String username, String filepath, String filename, Integer size, String type) 
 	{
 		Connection conn = null;
 		Statement stmt = null;
@@ -136,7 +136,7 @@ public class Database_server
 			conn = DriverManager.getConnection(DB_URL);
 			stmt = conn.createStatement();
 			
-			String sql = Query.insertIntoTable_server(IPaddr, filepath, filename, size, type);
+			String sql = Query.insertIntoTable_server(username, filepath, filename, size, type);
 			stmt.executeUpdate(sql);
 			result = 0;
 		}
@@ -240,7 +240,7 @@ public class Database_server
 		    {
 		    	HashMap<String, String> hm = new HashMap<String, String> ();
 		    	hm.put("identity", Integer.toString(rs.getInt("id")));
-		    	hm.put("IPaddr", rs.getString("IPaddr"));
+		    	hm.put("username", rs.getString("username"));
 		    	hm.put("filepath", rs.getString("filepath"));
 		    	hm.put("filename", rs.getString("filename"));
 		    	hm.put("type", rs.getString("type"));
@@ -282,7 +282,7 @@ public class Database_server
 		return null;
 	}
 	
-	public static ArrayList<HashMap<String, String>> selectFromTable_byUser(String IPaddr) 
+	public static ArrayList<HashMap<String, String>> selectFromTable_byUser(String username) 
 	{
 		Connection conn = null;
 		Statement stmt = null;
@@ -292,7 +292,7 @@ public class Database_server
 		    conn = DriverManager.getConnection(DB_URL);
 		    stmt = conn.createStatement();
 
-		    String sql = Query.selectFromTable_server_byUser(IPaddr);
+		    String sql = Query.selectFromTable_server_byUser(username);
 		    System.out.println("Query: " + sql);
 		    ResultSet rs = stmt.executeQuery(sql);
 		    ArrayList<HashMap<String, String>> selectionList = new ArrayList<HashMap<String, String>> ();
@@ -300,7 +300,7 @@ public class Database_server
 		    {
 		    	HashMap<String, String> hm = new HashMap<String, String> ();
 		    	hm.put("identity", Integer.toString(rs.getInt("id")));
-		    	hm.put("IPaddr", rs.getString("IPaddr"));
+		    	hm.put("username", rs.getString("username"));
 		    	hm.put("filepath", rs.getString("filepath"));
 		    	hm.put("filename", rs.getString("filename"));
 		    	hm.put("type", rs.getString("type"));
@@ -342,7 +342,7 @@ public class Database_server
 		return null;
 	}
 	
-	public static ArrayList<HashMap<String, String>> selectFromTable_byUserAndFile(String IPaddr, String filepath)
+	public static ArrayList<HashMap<String, String>> selectFromTable_byUserAndFile(String username, String filepath)
 	{
 		Connection conn = null;
 		Statement stmt = null;
@@ -352,14 +352,14 @@ public class Database_server
 		    conn = DriverManager.getConnection(DB_URL);
 		    stmt = conn.createStatement();
 
-		    String sql = Query.selectFromTable_server_byUserAndFile(IPaddr, filepath);
+		    String sql = Query.selectFromTable_server_byUserAndFile(username, filepath);
 		    ResultSet rs = stmt.executeQuery(sql);
 		    ArrayList<HashMap<String, String>> selectionList = new ArrayList<HashMap<String, String>> ();
 		    while(rs.next())
 		    {
 		    	HashMap<String, String> hm = new HashMap<String, String> ();
 		    	hm.put("identity", Integer.toString(rs.getInt("id")));
-		    	hm.put("IPaddr", rs.getString("IPaddr"));
+		    	hm.put("username", rs.getString("username"));
 		    	hm.put("filepath", rs.getString("filepath"));
 		    	hm.put("filename", rs.getString("filename"));
 		    	hm.put("type", rs.getString("type"));
@@ -401,7 +401,7 @@ public class Database_server
 		return null;
 	}
 	
-	public static int deleteFromTable_byUserAndFile(String IPaddr, String filepath) 
+	public static int deleteFromTable_byUserAndFile(String username, String filepath) 
 	{
 		Connection conn = null;
 		Statement stmt = null;
@@ -413,7 +413,7 @@ public class Database_server
 		    conn = DriverManager.getConnection(DB_URL);
 		    stmt = conn.createStatement();
 
-		    String sql = Query.deleteFromTable_server_byUserAndFile(IPaddr, filepath);
+		    String sql = Query.deleteFromTable_server_byUserAndFile(username, filepath);
 		    stmt.executeUpdate(sql);
 		    result = 0;
 		}
@@ -470,7 +470,7 @@ public class Database_server
 		    {
 		    	HashMap<String, String> hm = new HashMap<String, String> ();
 		    	hm.put("identity", Integer.toString(rs.getInt("id")));
-		    	hm.put("IPaddr", rs.getString("IPaddr"));
+		    	hm.put("username", rs.getString("username"));
 		    	hm.put("filepath", rs.getString("filepath"));
 		    	hm.put("filename", rs.getString("filename"));
 		    	hm.put("type", rs.getString("type"));
@@ -609,5 +609,98 @@ public class Database_server
 		    }
 		}
 		return false;
+	}
+	
+	public static String getIP(String username)
+	{
+		Connection conn = null;
+		Statement stmt = null;
+		try
+		{
+			Class.forName(JDBC_DRIVER);
+		    conn = DriverManager.getConnection(DB_URL);
+		    stmt = conn.createStatement();
+		    String sql = Query.getIP(username);
+		    ResultSet rs = stmt.executeQuery(sql);
+		    while(rs.next())
+		    {
+		    	String IPaddr = rs.getString("IPaddr");
+		    	return IPaddr;
+		    }
+		}
+		catch(SQLException se)
+		{
+			se.printStackTrace();
+		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
+		}
+		finally
+		{
+			try
+			{
+				if(stmt!=null)
+					conn.close();
+		    }
+			catch(SQLException se)
+			{
+		    
+			}
+		    try
+		    {
+		    	if(conn!=null)
+		    		conn.close();
+		    }
+		    catch(SQLException se)
+		    {
+		    	se.printStackTrace();
+		    }
+		}
+		return null;
+	}
+
+	public static void updateIP(String username, String clientIP) 
+	{
+		Connection conn = null;
+		Statement stmt = null;
+		try
+		{
+			Class.forName(JDBC_DRIVER);
+		    conn = DriverManager.getConnection(DB_URL);
+		    stmt = conn.createStatement();
+		    String sql = Query.updateIP(username, clientIP);
+		    stmt.executeUpdate(sql);
+		}
+		catch(SQLException se)
+		{
+			se.printStackTrace();
+		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
+		}
+		finally
+		{
+			try
+			{
+				if(stmt!=null)
+					conn.close();
+		    }
+			catch(SQLException se)
+			{
+		    
+			}
+		    try
+		    {
+		    	if(conn!=null)
+		    		conn.close();
+		    }
+		    catch(SQLException se)
+		    {
+		    	se.printStackTrace();
+		    }
+		}
+		return null;
 	}
 }

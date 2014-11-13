@@ -17,16 +17,16 @@ public class Query
 	protected static String TableName_server = "SERVER_LOG";
 	protected static String createTable_server = 	"CREATE TABLE if not exists " + TableName_server +
 													" (id INTEGER not NULL," +
-													" IPaddr TEXT not NULL," + 
+													" username TEXT not NULL," + 
 													" filepath TEXT," + 
 													" filename TEXT," + 
 													" size INTEGER," + 
 													" type TEXT," + 
 													" PRIMARY KEY ( id )," +
-													" FOREIGN KEY ( IPaddr ) REFERENCES createTable_credentials ON DELETE CASCADE ON UPDATE CASCADE);"; 
+													" FOREIGN KEY ( username ) REFERENCES credentials ON DELETE CASCADE ON UPDATE CASCADE);"; 
 	
-	protected static String credentials = "credentials";
-	protected static String createTable_credentials = "CREATE TABLE if not exists " + credentials + 
+	protected static String TableName_credentials = "credentials";
+	protected static String createTable_credentials = "CREATE TABLE if not exists " + TableName_credentials + 
 													" (IPaddr TEXT not NULL," + 
 													" username TEXT not NULL," + 
 													" password TEXT not NULL," + 
@@ -52,9 +52,9 @@ public class Query
 		return insert;
 	}
 	
-	protected static String insertIntoTable_server(String IP, String filepath, String filename, Integer size, String type)
+	protected static String insertIntoTable_server(String username, String filepath, String filename, Integer size, String type)
 	{
-		String insert = "INSERT INTO " + TableName_server + "(IPaddr, filepath, filename, size, type) VALUES(" + "\"" + IP + "\",\"" + filepath + "\",\"" + filename + "\"," + size + ",\"" + type + "\");";
+		String insert = "INSERT INTO " + TableName_server + "(username, filepath, filename, size, type) VALUES(" + "\"" + username + "\",\"" + filepath + "\",\"" + filename + "\"," + size + ",\"" + type + "\");";
 		return insert;
 	}
 	
@@ -84,7 +84,7 @@ public class Query
 	
 	protected static String selectFromTable_server_byFile(String file)
 	{
-		String select = "SELECT id, IPaddr, filepath, filename, size, type FROM " + TableName_server;
+		String select = "SELECT id, username, filepath, filename, size, type FROM " + TableName_server;
 		if(file == null)
 		{
 			// select all
@@ -94,27 +94,27 @@ public class Query
 		return select;
 	}
 	
-	protected static String selectFromTable_server_byUser(String IPaddr)
+	protected static String selectFromTable_server_byUser(String username)
 	{
-		String select = "SELECT id, IPaddr, filepath, filename, size, type FROM " + TableName_server;
-		if(IPaddr == null)
+		String select = "SELECT id, username, filepath, filename, size, type FROM " + TableName_server;
+		if(username == null)
 		{
 			// select all
 			return select + ";";
 		}
-		select = select + " WHERE IPaddr = \"" + IPaddr + "\";";
+		select = select + " WHERE username = \"" + username + "\";";
 		return select;
 	}
 	
-	protected static String selectFromTable_server_byUserAndFile(String IPaddr, String filepath)
+	protected static String selectFromTable_server_byUserAndFile(String username, String filepath)
 	{
-		String select = "SELECT id, IPaddr, filepath, filename, size, type FROM " + TableName_server + " WHERE IPaddr = \"" + IPaddr + "\" AND filepath = \"" + filepath + "\";";
+		String select = "SELECT id, username, filepath, filename, size, type FROM " + TableName_server + " WHERE username = \"" + username + "\" AND filepath = \"" + filepath + "\";";
 		return select;
 	}
 	
-	protected static String deleteFromTable_server_byUserAndFile(String IPaddr, String filepath)
+	protected static String deleteFromTable_server_byUserAndFile(String username, String filepath)
 	{
-		String delete = "DELETE FROM " + TableName_server + " WHERE IPaddr = \"" + IPaddr + "\" AND filepath = \"" + filepath + "\";";
+		String delete = "DELETE FROM " + TableName_server + " WHERE username = \"" + username + "\" AND filepath = \"" + filepath + "\";";
 		return delete;
 	}
 
@@ -126,13 +126,25 @@ public class Query
 
 	public static String verifyClient(String username, String password) 
 	{
-		String sql = "SELECT * FROM " + credentials + " WHERE username = \"" + username + "\" AND password = \"" + password + "\";";
+		String sql = "SELECT * FROM " + TableName_credentials + " WHERE username = \"" + username + "\" AND password = \"" + password + "\";";
 		return sql;
 	}
 	
 	public static String addClient(String username, String password, String IPaddr)
 	{
-		String sql = "INSERT INTO " + credentials + " VALUES (\"" + IPaddr + "\", \"" + username + "\", \"" + password + "\");";
+		String sql = "INSERT INTO " + TableName_credentials + " VALUES (\"" + IPaddr + "\", \"" + username + "\", \"" + password + "\");";
+		return sql;
+	}
+	
+	public static String getIP(String username)
+	{
+		String sql = "SELECT IPaddr FROM " + TableName_credentials + " WHERE username = \"" + username + "\"";
+		return sql;
+	}
+
+	public static String updateIP(String username, String clientIP) 
+	{
+		String sql = "UPDATE " + TableName_credentials + " SET IPaddr = \"" + clientIP + "\" WHERE username = \"" + username + "\"";
 		return sql;
 	}
 }
