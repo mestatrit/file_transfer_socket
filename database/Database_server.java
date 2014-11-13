@@ -701,6 +701,6 @@ public class Database_server
 		    	se.printStackTrace();
 		    }
 		}
-		return null;
+		return ;
 	}
 }
