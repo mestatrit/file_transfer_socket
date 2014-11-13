@@ -30,7 +30,7 @@ public class ServerThread extends Thread
 	public ServerThread(Socket socket)
 	{
 		thisID = id;
-		System.out.println("Thfread with id : " + thisID + " is constructed...");
+		System.out.println("Thread with id : " + thisID + " is constructed...");
 		id ++;
 		
 		this.socket = socket;
@@ -70,6 +70,9 @@ public class ServerThread extends Thread
 		 *	5. LIST - get the file list of a client with a particular ip USAGE: LIST <IP address>
 		 *		return arraylist of hasmaps mapping info:		<filename>		<filesize>		<filetype>
 		 *	
+		 *	6. LOGIN
+		 *
+		 *	7. REGISTER
 		 *	
 		 */
 		while(running)
@@ -197,6 +200,49 @@ public class ServerThread extends Thread
 					System.out.println("IP address: " + IPaddr);
 					ArrayList<HashMap<String, String>> result = Database_server.selectFromTable_byUser(IPaddr);
 					serversockwriterForObjects.writeObject(result);
+				}
+				else if(cmd.equals("LOGIN"))
+				{
+					String username = command.get("username");
+					String password = command.get("password");
+					boolean verification = Database_server.verifyCredentials(username, password);
+					ArrayList<HashMap<String, String>> list = new ArrayList<HashMap<String,String>> ();
+					if(verification)
+					{
+						HashMap<String, String> hm = new HashMap<String, String>();
+						hm.put("response", "SUCCESS");
+						list.add(hm);
+					}
+					else
+					{
+						HashMap<String, String> hm = new HashMap<String, String>();
+						hm.put("response", "FAILURE");
+						list.add(hm);
+					}
+					serversockwriterForObjects.writeObject(list);
+					serversockwriterForObjects.flush();
+				}
+				else if(cmd.equals("REGISTER"))
+				{
+					String username = command.get("username");
+					String password = command.get("password");
+					String IPaddr = command.get("IPaddr");
+					boolean add_verify = Database_server.addUser(username, password, IPaddr);
+					ArrayList<HashMap<String, String>> list = new ArrayList<HashMap<String,String>> ();
+					if(add_verify)
+					{
+						HashMap<String, String> hm = new HashMap<String, String>();
+						hm.put("response", "SUCCESS");
+						list.add(hm);
+					}
+					else
+					{
+						HashMap<String, String> hm = new HashMap<String, String>();
+						hm.put("response", "FAILURE");
+						list.add(hm);
+					}
+					serversockwriterForObjects.writeObject(list);
+					serversockwriterForObjects.flush();
 				}
 				else 
 				{

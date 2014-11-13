@@ -102,16 +102,16 @@ public class Client
 		ct.start();
 	}
 
+	@SuppressWarnings("unchecked")
 	private void execute() 
 	{
 		br = new BufferedReader(new InputStreamReader(System.in));
 		boolean flag = true;
 		do
 		{
-			System.out.println("Specify the download directory: ");
-			
 			try 
 			{
+				System.out.println("Specify the download directory: ");
 				downloadDir = br.readLine();
 				File file = new File(downloadDir);
 				if(!file.exists() || !file.isDirectory())
@@ -122,7 +122,67 @@ public class Client
 				}
 				connectToServer();
 				System.out.println("hello");
-
+				
+				System.out.println("Are you a registered user (y/n)...");
+				char ch = (char)br.read();
+				if(ch == 'y' || ch == 'Y')
+				{
+					// yes, he is registered user...
+					System.out.println("Enter your username...");
+					String username = br.readLine();
+					System.out.println("Enter your password...");
+					String password = br.readLine();
+					
+					HashMap<String, String> command = new HashMap<String, String> ();
+					command.put("command", "LOGIN");
+					command.put("username", username);
+					command.put("password", password);
+					serversockwriterForObjects.writeObject(command);
+					serversockwriterForObjects.flush();
+					ArrayList<HashMap<String, String>> cmd = (ArrayList<HashMap<String, String>>)serversockreaderForObjects.readObject();
+					if(cmd.isEmpty())
+					{
+						System.out.println("Some error... Try again... Aborting...");
+						return ;
+					}
+					if(cmd.get(0).get("response") == "SUCCESS")
+					{
+						System.out.println("Successfully logged in...");
+					}
+				}
+				else if(ch == 'n' || ch == 'N')
+				{
+					// You have to register
+					System.out.println("Enter your username...");
+					String uname = br.readLine();
+					System.out.println("Enter your password");
+					String pswd = br.readLine();
+					
+					HashMap<String, String> command = new HashMap<String, String> ();
+					command.put("command", "REGISTER");
+					command.put("username", uname);
+					command.put("password", pswd);
+					String ip = clientSocket.getLocalAddress().toString();
+					command.put("IPaddr", ip);
+					serversockwriterForObjects.writeObject(command);
+					serversockwriterForObjects.flush();
+					ArrayList<HashMap<String, String>> cmd = (ArrayList<HashMap<String, String>>)serversockreaderForObjects.readObject();
+					if(cmd.isEmpty())
+					{
+						System.out.println("Some error... Try again... Aborting...");
+						return ;
+					}
+					if(cmd.get(0).get("response") == "SUCCESS")
+					{
+						System.out.println("Successfully registered...");
+					}
+				}
+				else
+				{
+					System.out.println("Wrong output...");
+					return ;
+				}
+				
 				timerForRechecking.scheduleWithFixedDelay(new recheck(), 5, 15, TimeUnit.SECONDS);
 
 				showChoices();
@@ -200,7 +260,10 @@ public class Client
 	{
 		try 
 		{
-			FileReader fr = new FileReader("tracker.json");
+			String file;
+			System.out.println("Enter the path to the json file:");
+			file = br.readLine();
+			FileReader fr = new FileReader(file);
 			JSONParser jsonParser = new JSONParser();
 			JSONObject jsonObject = (JSONObject) jsonParser.parse(fr);
 			

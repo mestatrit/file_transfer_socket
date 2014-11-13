@@ -22,7 +22,16 @@ public class Query
 													" filename TEXT," + 
 													" size INTEGER," + 
 													" type TEXT," + 
-													" PRIMARY KEY ( id ));"; 
+													" PRIMARY KEY ( id )," +
+													" FOREIGN KEY ( IPaddr ) REFERENCES createTable_credentials ON DELETE CASCADE ON UPDATE CASCADE);"; 
+	
+	protected static String credentials = "credentials";
+	protected static String createTable_credentials = "CREATE TABLE if not exists " + credentials + 
+													" (IPaddr TEXT not NULL," + 
+													" username TEXT not NULL," + 
+													" password TEXT not NULL," + 
+													" PRIMARY KEY ( IPaddr )," + 
+													" UNIQUE ( username ));";
 	
 	
 	protected static String countFromTable(String tableName)
@@ -115,5 +124,15 @@ public class Query
 		return select;
 	}
 
+	public static String verifyClient(String username, String password) 
+	{
+		String sql = "SELECT * FROM " + credentials + " WHERE username = \"" + username + "\" AND password = \"" + password + "\";";
+		return sql;
+	}
 	
+	public static String addClient(String username, String password, String IPaddr)
+	{
+		String sql = "INSERT INTO " + credentials + " VALUES (\"" + IPaddr + "\", \"" + username + "\", \"" + password + "\");";
+		return sql;
+	}
 }

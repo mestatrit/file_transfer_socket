@@ -77,8 +77,10 @@ public class Database_server
 		    Class.forName(JDBC_DRIVER);
 		    conn = DriverManager.getConnection(DB_URL);
 		    stmt = conn.createStatement();
-		    String sql = Query.createTable_server; 
+		    String sql = Query.createTable_credentials;
 		    stmt.executeUpdate(sql);
+		    sql = Query.createTable_server; 
+		    stmt.executeUpdate(sql);		    
 		    result = 0;		    
 		}
 		catch(SQLException se)
@@ -508,4 +510,104 @@ public class Database_server
 		}
 		return selectionList;
 	}	
+	
+	public static boolean addUser(String username, String password, String IPaddr)
+	{
+		Connection conn = null;
+		Statement stmt = null;
+		try
+		{
+			Class.forName(JDBC_DRIVER);
+		    conn = DriverManager.getConnection(DB_URL);
+		    stmt = conn.createStatement();
+		    String sql = Query.addClient(username, password, IPaddr);
+		    int rs = stmt.executeUpdate(sql);
+		    if(rs == 1)
+		    {
+		    	return true;
+		    }
+		    return false;
+		}
+		catch(SQLException se)
+		{
+			se.printStackTrace();
+		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
+		}
+		finally
+		{
+			try
+			{
+				if(stmt!=null)
+					conn.close();
+		    }
+			catch(SQLException se)
+			{
+		    
+			}
+		    try
+		    {
+		    	if(conn!=null)
+		    		conn.close();
+		    }
+		    catch(SQLException se)
+		    {
+		    	se.printStackTrace();
+		    }
+		}
+		return false;
+
+	}
+	
+	public static boolean verifyCredentials(String username, String password)
+	{
+		Connection conn = null;
+		Statement stmt = null;
+		try
+		{
+			Class.forName(JDBC_DRIVER);
+		    conn = DriverManager.getConnection(DB_URL);
+		    stmt = conn.createStatement();
+		    String sql = Query.verifyClient(username, password);
+		    ResultSet rs = stmt.executeQuery(sql);
+		    boolean verification = false;
+		    while(rs.next())
+		    {
+		    	verification = true;
+		    }
+		    return verification;
+		}
+		catch(SQLException se)
+		{
+			se.printStackTrace();
+		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
+		}
+		finally
+		{
+			try
+			{
+				if(stmt!=null)
+					conn.close();
+		    }
+			catch(SQLException se)
+			{
+		    
+			}
+		    try
+		    {
+		    	if(conn!=null)
+		    		conn.close();
+		    }
+		    catch(SQLException se)
+		    {
+		    	se.printStackTrace();
+		    }
+		}
+		return false;
+	}
 }

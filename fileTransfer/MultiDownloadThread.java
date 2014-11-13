@@ -12,7 +12,7 @@ import java.util.concurrent.TimeUnit;
 public class MultiDownloadThread extends Thread
 {
 	private int clientPort = 5002;
-	private int size, MAX = 4096; // size of file
+	private int size, MAX = 1024; // size of file
 	private ArrayList<HashMap<String, String>> list = new ArrayList<HashMap<String,String>> (); // mapping of ip addresses and filepaths on that system
 	private File file; // file on my system
 	private ScheduledExecutorService timer;
