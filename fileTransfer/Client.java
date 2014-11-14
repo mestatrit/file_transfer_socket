@@ -149,10 +149,11 @@ public class Client
 						System.out.println("Some error... Try again... Aborting...");
 						return ;
 					}
-					if(cmd.get(0).get("response") == "SUCCESS")
+					if(cmd.get(0).get("response").equals("SUCCESS"))
 					{
 						System.out.println("Successfully logged in...");
 						this.username = username;
+						System.out.println(this.username);						
 					}
 				}
 				else if(ch == 'n' || ch == 'N')
@@ -177,7 +178,7 @@ public class Client
 						System.out.println("Some error... Try again... Aborting...");
 						return ;
 					}
-					if(cmd.get(0).get("response") == "SUCCESS")
+					if(cmd.get(0).get("response").equals("SUCCESS"))
 					{
 						System.out.println("Successfully registered...");
 						this.username = uname;
@@ -349,7 +350,7 @@ public class Client
 
 	private void getFileList() throws IOException 
 	{
-		System.out.println("Enter IP address of the user, whose list is required:");
+		System.out.println("Enter username, whose list is required:");
 		String IP = br.readLine();
 		//String command = "LIST " + IP;
 		HashMap<String, String> command = new HashMap<String, String> ();
@@ -474,6 +475,7 @@ public class Client
 			command.put("arg1", filename);
 			command.put("arg2", size.toString());
 			command.put("arg3", type);
+			System.out.println(this.username);
 			command.put("arg4", this.username);
 			
 			issueCommandToServer(command);
@@ -607,12 +609,12 @@ public class Client
 				}
 				else
 				{
-					System.out.println("IP addresses of currently online users are: ");
+					System.out.println("IP addresses and usernames of currently online users are: ");
 					
 					int i = 1;
 					for(HashMap<String, String> hm:result)
 					{
-						System.out.println(i + " ----> " + hm.get("response"));
+						System.out.println(i + " ----> " + hm.get("response") + " ----> " + hm.get("arg0"));
 						i ++;
 					}
 					

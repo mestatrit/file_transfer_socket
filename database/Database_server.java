@@ -659,6 +659,54 @@ public class Database_server
 		}
 		return null;
 	}
+	
+	public static String getUserName(String IPaddr)
+	{
+		Connection conn = null;
+		Statement stmt = null;
+		try
+		{
+			Class.forName(JDBC_DRIVER);
+		    conn = DriverManager.getConnection(DB_URL);
+		    stmt = conn.createStatement();
+		    String sql = Query.getUserName(IPaddr);
+		    ResultSet rs = stmt.executeQuery(sql);
+		    while(rs.next())
+		    {
+		    	return rs.getString("username");
+		    }		    	
+		}
+		catch(SQLException se)
+		{
+			se.printStackTrace();
+		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
+		}
+		finally
+		{
+			try
+			{
+				if(stmt!=null)
+					conn.close();
+		    }
+			catch(SQLException se)
+			{
+		    
+			}
+		    try
+		    {
+		    	if(conn!=null)
+		    		conn.close();
+		    }
+		    catch(SQLException se)
+		    {
+		    	se.printStackTrace();
+		    }
+		}
+		return null;
+	}
 
 	public static void updateIP(String username, String clientIP) 
 	{

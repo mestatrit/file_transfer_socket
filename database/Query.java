@@ -147,4 +147,10 @@ public class Query
 		String sql = "UPDATE " + TableName_credentials + " SET IPaddr = \"" + clientIP + "\" WHERE username = \"" + username + "\"";
 		return sql;
 	}
+
+	public static String getUserName(String iPaddr) 
+	{
+		String sql = "SELECT username FROM " + TableName_credentials + " WHERE IPaddr = \"" + iPaddr + "\";";
+		return sql;
+	}
 }

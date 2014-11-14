@@ -191,7 +191,9 @@ public class ServerThread extends Thread
 					 for(Map.Entry<ServerThread, Socket> entry: Server.connectedUsers.entrySet())
 					 {
 						 HashMap<String, String> hm = new HashMap<String, String> ();
-						 hm.put("response", entry.getValue().getInetAddress().toString());
+						 String ip = entry.getValue().getInetAddress().toString();
+						 hm.put("response", ip);
+						 hm.put("arg0", Database_server.getUserName(ip));
 						 result.add(hm);
 					 }
 					 serversockwriterForObjects.writeObject(result);
